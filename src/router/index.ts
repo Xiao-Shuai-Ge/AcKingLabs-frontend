@@ -1,7 +1,6 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 
-// 导入你的页面组件
 import HomePage from '../views/HomePage.vue'
 import AboutPage from '../views/AboutPage.vue'
 
