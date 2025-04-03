@@ -67,4 +67,10 @@ export default {
 @tailwind utilities;
 ```
 
+使用 AI 生成了一个注册页面，可以对此进行大改。
+
+使用了 fontawesome 字体图标库
+1. 安装依赖：`npm install -D @fortawesome/fontawesome-free`
+2. 在 `main.js` 中导入 `import '@fortawesome/fontawesome-free/css/all.css'`
+
 ---
