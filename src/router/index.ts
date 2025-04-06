@@ -14,7 +14,16 @@ const routes = [
         name: 'Login',
         component: () => import('../views/LoginPage.vue')
     },
-    // 添加更多路由...
+    {
+        path: '/diary',
+        name: 'Diary',
+        component: () => import('../views/DiaryPage.vue')
+    },
+    {
+        path: '/learn',
+        name: 'Learn',
+        component: () => import('../views/LearnPage.vue')
+    },
 ]
 
 const router = createRouter({

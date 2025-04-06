@@ -127,7 +127,7 @@ isLogin ? 'border-b-2 border-black text-gray-900' : 'text-gray-500 hover:text-gr
                     <i class="fas fa-user text-gray-400"></i>
                   </div>
                   <input
-                      v-model="registerForm.name"
+                      v-model="registerForm.username"
                       type="text"
                       id="register-name"
                       class="border-gray-300 focus:ring-black focus:border-black block w-full pl-10 pr-3 py-2 sm:text-sm rounded-md border"
@@ -238,6 +238,7 @@ isLogin ? 'border-b-2 border-black text-gray-900' : 'text-gray-500 hover:text-gr
                       class="border-gray-300 focus:ring-black focus:border-black block w-full pl-10 pr-10 py-2 sm:text-sm rounded-md border"
                       placeholder="请再次输入密码"
                       required
+                      :class = "(registerForm.password != registerForm.confirmPassword)? 'border-red-500':''"
                   />
                   <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <i
@@ -255,6 +256,9 @@ isLogin ? 'border-b-2 border-black text-gray-900' : 'text-gray-500 hover:text-gr
               </button>
             </form>
           </Transition>
+          <div class="text-red-500 text-center mt-2">
+            {{ message }}
+          </div>
         </div>
       </div>
     </div>
@@ -262,13 +266,12 @@ isLogin ? 'border-b-2 border-black text-gray-900' : 'text-gray-500 hover:text-gr
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import {onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
+import {login, register, send_code} from "@/api/auth";
 
-// Logo URL
-const logoUrl =
-    "https://public.readdy.ai/ai/img_res/17bd1872122269f0cd91f82d4acaac1d.jpg";
-
+// 显示提示信息
+let message = ref("")
 
 // 登录/注册切换
 const isLogin = ref(true);
@@ -283,55 +286,91 @@ const loginForm = ref({
 });
 // 注册表单
 const registerForm = ref({
-  name: "",
+  username: "",
   email: "",
+  verificationCode: "",
   password: "",
   confirmPassword: "",
   agreeTerms: false,
 });
+
 // 登录处理
-const handleLogin = () => {
-  console.log("登录信息:", loginForm.value);
-  // 这里添加登录逻辑
-  const message = document.createElement("div");
-  message.className =
-      "fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded";
-  message.innerHTML = "登录请求已发送";
-  document.body.appendChild(message);
-  setTimeout(() => {
-    document.body.removeChild(message);
-  }, 3000);
-};
-// 注册处理
-const handleRegister = () => {
-  if (registerForm.value.password !== registerForm.value.confirmPassword) {
-    const errorMessage = document.createElement("div");
-    errorMessage.className =
-        "fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded";
-    errorMessage.innerHTML = "两次输入的密码不一致";
-    document.body.appendChild(errorMessage);
-    setTimeout(() => {
-      document.body.removeChild(errorMessage);
-    }, 3000);
-    return;
+const handleLogin = async () => {
+  // 检查密码长度
+  if (loginForm.value.password.length < 6 || loginForm.value.password.length > 30) {
+    message.value = "密码长度应在 6 到 30 之间"
+    return
   }
-  console.log("注册信息:", registerForm.value);
-  // 这里添加注册逻辑
-  const message = document.createElement("div");
-  message.className =
-      "fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded";
-  message.innerHTML = "注册请求已发送";
-  document.body.appendChild(message);
-  setTimeout(() => {
-    document.body.removeChild(message);
-  }, 3000);
+  message.value = ""
+  const data = await login({
+    email: loginForm.value.email,
+    password: loginForm.value.password,
+    is_remember : loginForm.value.rememberMe,
+  })
+  console.log(data)
+  if (data.data.code === 10009) {
+    // 账号密码错误
+    message.value = "账号或密码错误"
+  }
+  localStorage.setItem('atoken', data.data.data.atoken)
+  localStorage.setItem('rtoken', data.data.data.rtoken)
+  // 跳转到主页
+  window.location.href = '/'
 };
 
+// 注册处理
+const handleRegister = async () => {
+  // 确认密码
+  if (registerForm.value.password !== registerForm.value.confirmPassword) {
+    message.value = "密码不一致！";
+    return
+  }
+  // 密码长度
+  if (registerForm.value.password.length < 6 || registerForm.value.password.length > 30) {
+    message.value = "密码长度应在 6 到 30 之间"
+    return
+  }
+  // 用户名长度
+  if (registerForm.value.username.length > 30) {
+    message.value = "用户名长度不应超过 30"
+    return
+  }
+  // 发送请求
+  const data = await register({
+    email: registerForm.value.email,
+    password: registerForm.value.password,
+    username: registerForm.value.username,
+    code: registerForm.value.verificationCode,
+  })
+  console.log(data)
+  if (data.data.code === 10008) {
+    // 验证码错误
+    message.value = "验证码错误"
+    return
+  } else if (data.data.code === 10010) {
+    // 邮箱已被注册
+    message.value = "邮箱已被使用"
+    return
+  } else if (data.data.code != 20000) {
+    message.value = "发生错误"
+    return
+  }
+  localStorage.setItem('atoken', data.data.data.atoken)
+  // 跳转到主页
+  window.location.href = '/'
+};
 
+// 发送验证码
 const isSending = ref(false);
 const countdown = ref(0);
-const sendVerificationCode = () => {
-  console.log("发送")
+const sendVerificationCode = async () => {
+  const data = await send_code({email: registerForm.value.email})
+  if (data.data.code != 20000) {
+    message.value = "发生错误"
+    return
+  }
+  message.value = ""
+  console.log("发送成功")
   countdown.value = 60;
   const timer = setInterval(() => {
     countdown.value -= 1;
@@ -340,6 +379,10 @@ const sendVerificationCode = () => {
     }
   }, 1000);
 };
+
+onMounted( () => {
+  console.log("test");
+})
 
 
 </script>

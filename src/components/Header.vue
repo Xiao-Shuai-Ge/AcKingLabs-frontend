@@ -1,92 +1,157 @@
+<!-- The exported code uses Tailwind CSS. Install Tailwind CSS in your dev environment to ensure all styles work. -->
 <template>
-  <!-- 导航栏 -->
-  <nav class="bg-white shadow-sm w-full">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16 items-center">
-        <div class="flex-shrink-0 flex items-center">
-          <img class="h-8 w-auto" src="/assets/AcKing_black.png" alt="公司Logo" />
-          <span class="ml-2 text-xl font-semibold text-gray-900"
-          >AcKing</span
+  <div>
+    <nav
+        class="fixed top-0 left-0 w-full h-[60px] bg-white shadow-sm z-50 flex items-center justify-between"
+    >
+      <!-- Logo区域 -->
+      <div class="flex items-center ml-5"
+           @click="navigateTo('/')"
+      >
+        <img class="h-10 w-auto" src="/assets/AcKing_black.png" alt="公司Logo" />
+        <span class="ml-2 text-xl font-semibold">AcKing 学习分享平台</span>
+      </div>
+
+      <!-- 功能导航 -->
+      <div
+          class="flex items-center justify-center overflow-x-auto hide-scrollbar h-full flex-1 mr-32"
+      >
+        <div class="flex h-full">
+          <div
+              v-for="(item, index) in navItems"
+              :key="index"
+              @click="navigateTo(item.path)"
+              :class="[
+              'px-3 py-1.5 w-32 transition-all duration-200 cursor-pointer whitespace-nowrap !rounded-button text-center text-xl pt-3',
+              $route.path === item.path ? 'bg-black text-white border-b-4' : 'text-gray-800 hover:bg-gray-100 border-l-2 border-r-1',
+              $route.path === item.path ? item.color:'border-gray-100'
+            ]"
           >
-        </div>
-        <div class="hidden md:block">
-          <div class="ml-10 flex items-center space-x-4">
-            <a
-                href="#"
-                class="text-gray-800 hover:text-black px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
-            >首页</a
-            >
-            <a
-                href="#"
-                class="text-gray-800 hover:text-black px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
-            >产品</a
-            >
-            <a
-                href="#"
-                class="text-gray-800 hover:text-black px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
-            >服务</a
-            >
-            <a
-                href="#"
-                class="text-gray-800 hover:text-black px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
-            >关于我们</a
-            >
-            <a
-                href="#"
-                class="text-gray-800 hover:text-black px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
-            >联系我们</a
-            >
+            <span class="relative z-10">{{ item.name }}</span>
+            <i class="ml-2" :class="item.icon"></i>
           </div>
         </div>
-        <div class="md:hidden">
-          <button
-              @click="toggleMobileMenu"
-              class="text-gray-800 hover:text-black focus:outline-none cursor-pointer"
+      </div>
+
+
+      <!-- 用户信息 -->
+      <div
+          class="flex items-center mr-5 relative"
+          @mouseenter="openDropdown()"
+          @mouseleave="closeDropdown()"
+      >
+        <div class="flex items-center cursor-pointer">
+          <span class="text-sm text-gray-800 mr-2">{{ userName }}</span>
+          <div class="w-9 h-9 rounded-full overflow-hidden bg-gray-200 mr-2.5">
+            <img
+                :src="userAvatarUrl"
+                alt="用户头像"
+                class="w-full h-full object-cover object-top"
+                @click="navigateTo('/login')"
+            />
+          </div>
+<!--          <i class="fas fa-chevron-down text-xs ml-2 text-gray-500"></i>-->
+        </div>
+
+        <!-- 下拉菜单 -->
+        <div
+            v-show="showDropdown"
+            class="absolute right-0 top-full mt-1 w-36 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-200 z-10"
+        >
+          <div
+              v-for="(option, index) in dropdownOptions"
+              :key="index"
+              class="px-5 py-2.5 hover:bg-gray-100 cursor-pointer transition-all duration-200 text-sm"
           >
-            <i class="fas fa-bars text-xl"></i>
-          </button>
+            <i :class="['mr-2', option.icon]"></i>
+            {{ option.label }}
+          </div>
         </div>
       </div>
-    </div>
-    <!-- 移动端菜单 -->
-    <div v-if="isMobileMenuOpen" class="md:hidden">
-      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-        <a
-            href="#"
-            class="text-gray-800 hover:text-black block px-3 py-2 rounded-md text-base font-medium cursor-pointer"
-        >首页</a
-        >
-        <a
-            href="#"
-            class="text-gray-800 hover:text-black block px-3 py-2 rounded-md text-base font-medium cursor-pointer"
-        >产品</a
-        >
-        <a
-            href="#"
-            class="text-gray-800 hover:text-black block px-3 py-2 rounded-md text-base font-medium cursor-pointer"
-        >服务</a
-        >
-        <a
-            href="#"
-            class="text-gray-800 hover:text-black block px-3 py-2 rounded-md text-base font-medium cursor-pointer"
-        >关于我们</a
-        >
-        <a
-            href="#"
-            class="text-gray-800 hover:text-black block px-3 py-2 rounded-md text-base font-medium cursor-pointer"
-        >联系我们</a
-        >
-      </div>
-    </div>
-  </nav>
+    </nav>
+  </div>
 </template>
 
-<script setup lang="ts">
-import { ref } from 'vue';
+<script lang="ts" setup>
+import { ref } from "vue";
+import router from "@/router";
 
-// 移动端菜单状态
-const isMobileMenuOpen = ref(true);
-const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+// 导航项
+const navItems = ref([
+  { name: "打卡", path: "/diary" , icon: "fa-solid fa-square-check" , color : "border-blue-500" },
+  { name: "学习", path: "/learn" , icon: "fa-solid fa-book-open-reader" , color : "border-yellow-500"},
+]);
+
+// 下拉菜单选项
+const dropdownOptions = ref([
+  { label: "个人主页", icon: "fas fa-user" },
+  { label: "退出登录", icon: "fas fa-sign-out-alt" },
+]);
+
+// 导航跳转方法
+const navigateTo = (path: string) => {
+  router.push(path);
 };
+
+// 当前激活的导航索引
+const activeNavIndex = ref(0);
+
+// 下拉菜单显示状态
+const showDropdown = ref(false);
+
+// 用户信息
+const userName = ref("");
+const userAvatarUrl = ref(
+    "/assets/none.png",
+);
+
+// 延迟关闭下拉菜单
+let closeDropdownTimer = 0;
+const closeDropdown = () => {
+  closeDropdownTimer = 1
+  setTimeout(() => {
+    if (closeDropdownTimer === 1) {
+      showDropdown.value = false;
+    }
+  }, 200);
+}
+
+// 打开下拉菜单选项
+const openDropdown = () => {
+  showDropdown.value = true;
+  closeDropdownTimer = 0;
+}
+
 </script>
+
+<style scoped>
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 禁用input number的默认箭头 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* 添加过渡动画 */
+.nav-item {
+  transition: all 0.3s ease;
+}
+
+/* 微调指示条动画 */
+.nav-item::after {
+  transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+</style>
