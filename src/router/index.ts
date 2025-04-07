@@ -24,6 +24,11 @@ const routes = [
         name: 'Learn',
         component: () => import('../views/LearnPage.vue')
     },
+    {
+        path: '/profile/:id',
+        name: 'Profile',
+        component: () => import('../views/ProfilePage.vue')
+    }
 ]
 
 const router = createRouter({

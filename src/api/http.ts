@@ -29,6 +29,12 @@ http.interceptors.response.use(
     response => {
         // 检查业务代码是否为-20000
         if (response.data?.code === -20000) {
+            if (response.config.url === '/api/user/my-info') {
+                // 无需刷新token
+                console.log("用户未登录，显示空白头像")
+                return response
+            }
+
             console.log("token失效，开始刷新token")
             const originalRequest = response.config
 

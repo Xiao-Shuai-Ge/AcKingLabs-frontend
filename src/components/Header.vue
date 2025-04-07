@@ -55,13 +55,14 @@
 
         <!-- 下拉菜单 -->
         <div
-            v-show="showDropdown"
+            v-show="showDropdown && userName"
             class="absolute right-0 top-full mt-1 w-36 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-200 z-10"
         >
           <div
               v-for="(option, index) in dropdownOptions"
               :key="index"
               class="px-5 py-2.5 hover:bg-gray-100 cursor-pointer transition-all duration-200 text-sm"
+              @click = "option.click"
           >
             <i :class="['mr-2', option.icon]"></i>
             {{ option.label }}
@@ -73,8 +74,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import {onMounted, ref} from "vue";
 import router from "@/router";
+import {my_info} from "@/api/user";
 
 // 导航项
 const navItems = ref([
@@ -84,9 +86,22 @@ const navItems = ref([
 
 // 下拉菜单选项
 const dropdownOptions = ref([
-  { label: "个人主页", icon: "fas fa-user" },
-  { label: "退出登录", icon: "fas fa-sign-out-alt" },
+  { label: "个人主页", icon: "fas fa-user" , click: () => navigateToProfile() },
+  { label: "退出登录", icon: "fas fa-sign-out-alt" , click: () => logout() },
 ]);
+
+// 前往个人主页
+const navigateToProfile = () => {
+  router.push("/profile/"+myID.value);
+};
+
+// 退出登录方法
+const logout = () => {
+  console.log("退出登录");
+  localStorage.removeItem('atoken')
+  localStorage.removeItem('rtoken')
+  navigateTo('/login')
+}
 
 // 导航跳转方法
 const navigateTo = (path: string) => {
@@ -100,10 +115,40 @@ const activeNavIndex = ref(0);
 const showDropdown = ref(false);
 
 // 用户信息
+const myID = ref(0);
 const userName = ref("");
 const userAvatarUrl = ref(
-    "/assets/none.png",
+    "/assets/not_logged_in.png",
 );
+
+onMounted( async () => {
+  // 先从本地存储中获取用户名和头像
+  const username = localStorage.getItem('username')
+  const avatar = localStorage.getItem('avatar')
+  if (username && avatar) {
+    userName.value = username
+    userAvatarUrl.value = avatar
+    myID.value = 0
+  }
+  // 获取用户信息
+  const data = await my_info();
+  if (data.data.code != 20000) {
+    console.log("用户未登录");
+    userName.value = ""
+    userAvatarUrl.value = "/assets/not_logged_in.png";
+  } else {
+    myID.value = data.data.data.id;
+    userName.value = data.data.data.username;
+    if (data.data.data.avatar.length > 0) {
+      userAvatarUrl.value = data.data.data.avatar;
+    } else {
+      console.log("用户头像为空");
+      userAvatarUrl.value = "/assets/default_avatar.png";
+    }
+  }
+  localStorage.setItem('username', userName.value)
+  localStorage.setItem('avatar', userAvatarUrl.value)
+});
 
 // 延迟关闭下拉菜单
 let closeDropdownTimer = 0;
