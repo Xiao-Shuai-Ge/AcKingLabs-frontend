@@ -25,5 +25,9 @@ export default defineConfig({
         additionalData: `@import "@fortawesome/fontawesome-free/scss/fontawesome.scss";`
       }
     }
+  },
+  base: './', // 添加这一行
+  build: {
+    assetsDir: 'assets',
   }
 })

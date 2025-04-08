@@ -364,7 +364,9 @@ const handleRegister = async () => {
 const isSending = ref(false);
 const countdown = ref(0);
 const sendVerificationCode = async () => {
+  console.log("发送验证码")
   const data = await send_code({email: registerForm.value.email})
+  console.log(data)
   if (data.data.code != 20000) {
     message.value = "发生错误"
     return

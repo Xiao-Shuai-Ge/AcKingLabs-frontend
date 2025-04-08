@@ -24,7 +24,7 @@
           <i class="fas fa-pencil-alt"></i>
         </button>
       </div>
-      <h1 class="text-3xl font-bold mb-8">{{ userInfo.nickname }}</h1>
+      <h1 class="text-3xl font-bold mb-8">{{ userInfo.username }}</h1>
 
       <!-- 个人详细信息卡片 -->
       <div
@@ -191,31 +191,23 @@
                   alt="用户头像"
                   class="w-full h-full object-cover object-top"
               />
-              <div
-                  class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              >
-                <label for="avatar-upload" class="text-white cursor-pointer">
-                  <i class="fas fa-camera"></i>
-                </label>
-                <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    class="hidden"
-                    @change="handleAvatarChange"
-                />
-              </div>
             </div>
-            <p class="text-sm text-gray-500">点击更换头像</p>
           </div>
 
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-              >昵称</label
-              >
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                头像
+                <span class="text-gray-500 text-sm">
+                  (使用第三方图床上传，例如:
+                  <a href="https://imgurl.org" class="text-blue-400">
+                    https://imgurl.org
+                  </a>
+                  )
+                </span>
+              </label>
               <input
-                  v-model="editForm.nickname"
+                  v-model="editForm.avatarUrl"
                   type="text"
                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
               />
@@ -223,7 +215,18 @@
 
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1"
-              >真实姓名</label
+              >昵称*(必填)</label
+              >
+              <input
+                  v-model="editForm.username"
+                  type="text"
+                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1"
+              >真实姓名*(必填)</label
               >
               <input
                   v-model="editForm.realName"
@@ -236,21 +239,11 @@
               <label class="block text-sm font-medium text-gray-700 mb-1"
               >年级</label
               >
-              <div class="relative">
-                <select
-                    v-model="editForm.grade"
-                    class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800 appearance-none"
-                >
-                  <option v-for="grade in grades" :key="grade" :value="grade">
-                    {{ grade }}
-                  </option>
-                </select>
-                <div
-                    class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none"
-                >
-                  <i class="fas fa-chevron-down text-gray-500"></i>
-                </div>
-              </div>
+              <input
+                  v-model="editForm.grade"
+                  type="number"
+                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+              />
             </div>
 
             <div>
@@ -298,23 +291,58 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from "vue";
+import {ref, computed, onMounted} from "vue";
 import Header from "@/components/Header.vue";
+import {get_profile} from "@/api/user";
+import {useRoute} from "vue-router";
 
 // 用户信息
 const userInfo = ref({
-  nickname: "代码小侠",
+  username: "",
   avatarUrl:
-      "https://public.readdy.ai/ai/img_res/bee649d444170e226a885eee4fbf4c00.jpg",
-  realName: "张三",
-  grade: "大三",
-  studentId: "2022114514",
-  codeforcesId: "CodeMaster2022",
-  codeforcesRating: 1850,
-  experience: 750,
-  maxExperience: 1000,
-  experiencePercentage: 75,
+      "",
+  realName: "",
+  grade: 24,
+  studentId: "",
+  codeforcesId: "",
+  codeforcesRating: 0,
+  experience: 0,
+  maxExperience: 0,
+  experiencePercentage: 20,
 });
+
+const route = useRoute()
+
+onMounted( async () => {
+  const data = await get_profile({id: String(route.params.id)})
+  console.log(data)
+  // 头像
+  if (data.data.data.avatar.length > 0) {
+    userInfo.value.avatarUrl = data.data.data.avatar;
+  } else {
+    console.log("用户头像为空");
+    userInfo.value.avatarUrl = "/assets/default_avatar.png";
+  }
+  // 用户名
+  userInfo.value.username = data.data.data.username;
+  // 姓名
+  userInfo.value.realName = format(data.data.data.real_name);
+  // 年级
+  userInfo.value.grade = data.data.data.grade;
+  // 学号
+  userInfo.value.studentId = format(data.data.data.student_no);
+  // Codeforces ID
+  userInfo.value.codeforcesId = format(data.data.data.codeforces_id);
+  // Codeforces Rating
+  userInfo.value.codeforcesRating = data.data.data.codeforces_rating;
+  // 经验
+  userInfo.value.experience = data.data.data.xp;
+})
+
+const format = (s:string) => {
+  if (s.length > 0) return s;
+  else return "无";
+}
 
 // 标签页
 const tabs = [
@@ -385,7 +413,7 @@ const posts = ref([
 // 编辑表单
 const showEditModal = ref(false);
 const editForm = ref({
-  nickname: "",
+  username: "",
   avatarUrl: "",
   realName: "",
   grade: "",
@@ -409,7 +437,9 @@ const closeEditModal = () => {
 
 // 保存用户信息
 const saveUserInfo = () => {
-  userInfo.value = { ...userInfo.value, ...editForm.value };
+  // userInfo.value = { ...userInfo.value, ...editForm.value };
+  // 刷新页面
+  location.reload();
   closeEditModal();
 };
 
