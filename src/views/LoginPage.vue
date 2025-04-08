@@ -269,6 +269,7 @@ isLogin ? 'border-b-2 border-black text-gray-900' : 'text-gray-500 hover:text-gr
 import {onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
 import {login, register, send_code} from "@/api/auth";
+import {useUserStore} from "@/store/user";
 
 // 显示提示信息
 let message = ref("")
@@ -294,6 +295,8 @@ const registerForm = ref({
   agreeTerms: false,
 });
 
+const UserStore = useUserStore();
+
 // 登录处理
 const handleLogin = async () => {
   // 检查密码长度
@@ -312,8 +315,8 @@ const handleLogin = async () => {
     // 账号密码错误
     message.value = "账号或密码错误"
   }
-  localStorage.setItem('atoken', data.data.data.atoken)
-  localStorage.setItem('rtoken', data.data.data.rtoken)
+  UserStore.setAtoken(data.data.data.atoken)
+  UserStore.setRtoken(data.data.data.rtoken)
   // 跳转到主页
   window.location.href = '/'
 };
@@ -355,7 +358,7 @@ const handleRegister = async () => {
     message.value = "发生错误"
     return
   }
-  localStorage.setItem('atoken', data.data.data.atoken)
+  UserStore.setAtoken(data.data.data.atoken)
   // 跳转到主页
   window.location.href = '/'
 };

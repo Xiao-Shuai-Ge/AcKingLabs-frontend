@@ -77,6 +77,7 @@
 import {onMounted, ref} from "vue";
 import router from "@/router";
 import {my_info} from "@/api/user";
+import {useUserStore} from "@/store/user";
 
 // 导航项
 const navItems = ref([
@@ -95,12 +96,13 @@ const navigateToProfile = () => {
   router.push("/profile/"+myID.value);
 };
 
+const UserStore = useUserStore();
+
 // 退出登录方法
 const logout = () => {
   console.log("退出登录");
-  localStorage.removeItem('atoken')
-  localStorage.removeItem('rtoken')
-  navigateTo('/login')
+  UserStore.logout();
+  navigateTo('/login');
 }
 
 // 导航跳转方法
@@ -115,40 +117,84 @@ const activeNavIndex = ref(0);
 const showDropdown = ref(false);
 
 // 用户信息
-const myID = ref(0);
+const myID = ref("");
 const userName = ref("");
 const userAvatarUrl = ref(
     "/assets/not_logged_in.png",
 );
 
-onMounted( async () => {
-  // 先从本地存储中获取用户名和头像
-  const username = localStorage.getItem('username')
-  const avatar = localStorage.getItem('avatar')
-  if (username && avatar) {
-    userName.value = username
-    userAvatarUrl.value = avatar
-    myID.value = 0
-  }
-  // 获取用户信息
-  const data = await my_info();
-  if (data.data.code != 20000) {
+onMounted(async () => {
+  // 判断用户是否登录
+  if (UserStore.isLogin()) {
+    // 先读取本地
+    const localData = UserStore.getUserInfo();
+    myID.value = localData.user_id;
+    userName.value = localData.username;
+    userAvatarUrl.value = localData.avatar;
+    // 从服务器获取用户信息
+    const data = await my_info();
+    if (data.data.code != 20000) {
+      console.log("用户未登录");
+      userName.value = ""
+      userAvatarUrl.value = "/assets/not_logged_in.png";
+    } else {
+      myID.value = data.data.data.id;
+      userName.value = data.data.data.username;
+      if (data.data.data.avatar.length > 0) {
+        userAvatarUrl.value = data.data.data.avatar;
+      } else {
+        console.log("用户头像为空");
+        userAvatarUrl.value = "/assets/default_avatar.png";
+      }
+    }
+    // 保存到本地
+    UserStore.setUserInfo({
+      user_id : myID.value,
+      username : userName.value,
+      avatar : userAvatarUrl.value,
+    });
+  } else {
     console.log("用户未登录");
     userName.value = ""
     userAvatarUrl.value = "/assets/not_logged_in.png";
-  } else {
-    myID.value = data.data.data.id;
-    userName.value = data.data.data.username;
-    if (data.data.data.avatar.length > 0) {
-      userAvatarUrl.value = data.data.data.avatar;
-    } else {
-      console.log("用户头像为空");
-      userAvatarUrl.value = "/assets/default_avatar.png";
-    }
   }
-  localStorage.setItem('username', userName.value)
-  localStorage.setItem('avatar', userAvatarUrl.value)
-});
+})
+
+// onMounted( async () => {
+//   // 先从本地存储中获取用户名和头像
+//   const username = localStorage.getItem('username')
+//   const avatar = localStorage.getItem('avatar')
+//   if (username && avatar) {
+//     userName.value = username
+//     userAvatarUrl.value = avatar
+//     myID.value = ""
+//   }
+//   // 获取用户信息
+//   const data = await my_info();
+//   if (data.data.code != 20000) {
+//     console.log("用户未登录");
+//     userName.value = ""
+//     userAvatarUrl.value = "/assets/not_logged_in.png";
+//   } else {
+//     myID.value = data.data.data.id;
+//     userName.value = data.data.data.username;
+//     if (data.data.data.avatar.length > 0) {
+//       userAvatarUrl.value = data.data.data.avatar;
+//     } else {
+//       console.log("用户头像为空");
+//       userAvatarUrl.value = "/assets/default_avatar.png";
+//     }
+//   }
+//   const UserStore = useUserStore();
+//   UserStore.setUserInfo({
+//     user_id : myID.value,
+//     username : userName.value,
+//     avatar : userAvatarUrl.value,
+//   });
+//
+//   localStorage.setItem('username', userName.value)
+//   localStorage.setItem('avatar', userAvatarUrl.value)
+// });
 
 // 延迟关闭下拉菜单
 let closeDropdownTimer = 0;

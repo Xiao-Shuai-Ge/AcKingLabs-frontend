@@ -1,9 +1,10 @@
 import axios, {AxiosError} from 'axios'
+import {useUserStore} from "@/store/user";
 
 // 创建axios实例
 const http = axios.create({
-    //baseURL: "http://localhost:8080",
-    baseURL: "http://120.79.250.47:8080",
+    baseURL: "http://localhost:8080",
+    //baseURL: "http://120.79.250.47:8080",
     timeout: 10000
 })
 
@@ -25,16 +26,14 @@ http.interceptors.request.use(config => {
 let isRefreshing = false
 let queuedRequests: ((token: string) => void)[] = []
 
+
+
 // 响应拦截器
 http.interceptors.response.use(
     response => {
+        const UserStore = useUserStore()
         // 检查业务代码是否为-20000
         if (response.data?.code === -20000) {
-            if (response.config.url === '/api/user/my-info') {
-                // 无需刷新token
-                console.log("用户未登录，显示空白头像")
-                return response
-            }
 
             console.log("token失效，开始刷新token")
             const originalRequest = response.config
@@ -45,7 +44,7 @@ http.interceptors.response.use(
                 return refreshToken()
                     .then(newAToken => {
                         // 1. 存储新token
-                        localStorage.setItem('atoken', newAToken)
+                        UserStore.setAtoken(newAToken)
 
                         // 2. 更新后续请求的默认headers
                         http.defaults.headers.common.Authorization = `Bearer ${newAToken}`
@@ -59,9 +58,14 @@ http.interceptors.response.use(
                         return http(originalRequest)
                     })
                     .catch(error => {
+                        if (response.config.url === '/api/user/my-info') {
+                            // 无需跳转
+                            console.log("用户未登录，显示空白头像")
+                            return response
+                        }
+
                         // 刷新失败时清理token并跳转登录
-                        localStorage.removeItem('atoken')
-                        localStorage.removeItem('rtoken')
+                        UserStore.logout()
                         window.location.href = '/login'
                         return Promise.reject(error)
                     })
