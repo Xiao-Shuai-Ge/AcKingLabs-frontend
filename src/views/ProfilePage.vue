@@ -279,9 +279,9 @@
             </button>
             <button
                 type="submit"
-                class="px-4 py-2 bg-gray-800 text-white rounded-md  cursor-pointer whitespace-nowrap !rounded-button"
+                class="px-4 py-2 text-white rounded-md  cursor-pointer whitespace-nowrap !rounded-button"
                 :disabled = "DisabledSaveButton"
-                :class = "{'bg-gray-500':DisabledSaveButton, 'hover:bg-gray-700':!DisabledSaveButton}"
+                :class = "{'bg-gray-300':DisabledSaveButton, 'bg-gray-800 hover:bg-gray-700':!DisabledSaveButton}"
             >
               保存
             </button>
