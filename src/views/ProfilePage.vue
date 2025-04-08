@@ -17,14 +17,16 @@
               class="w-full h-full object-cover object-top"
           />
         </div>
-        <button
-            @click="openEditModal"
-            class="absolute top-0 right-0 bg-gray-800 text-white p-2 rounded-full cursor-pointer hover:bg-gray-600 transition-colors duration-300"
-        >
-          <i class="fas fa-pencil-alt"></i>
-        </button>
+        <div v-if="isCanEdit">
+          <button
+              @click="openEditModal"
+              class="absolute top-0 right-0 bg-gray-800 text-white p-2 rounded-full cursor-pointer hover:bg-gray-600 transition-colors duration-300"
+          >
+            <i class="fas fa-pencil-alt"></i>
+          </button>
+        </div>
       </div>
-      <h1 class="text-3xl font-bold mb-8">{{ userInfo.username }}</h1>
+      <h1 class="text-3xl font-bold mb-8" :class = GetTextColor(userInfo.level) >{{ userInfo.username }}</h1>
 
       <!-- 个人详细信息卡片 -->
       <div
@@ -34,7 +36,8 @@
           <p class="text-sm text-gray-600 mb-1">经验值</p>
           <div class="w-full bg-gray-200 rounded-full h-4">
             <div
-                class="bg-gray-800 h-4 rounded-full"
+                class="h-4 rounded-full"
+                :class = GetBgColor(userInfo.level)
                 :style="{ width: `${userInfo.experiencePercentage}%` }"
             ></div>
           </div>
@@ -220,7 +223,12 @@
               <input
                   v-model="editForm.username"
                   type="text"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+                  class="w-full px-3 py-2 border-2  rounded-md focus:outline-none "
+                  :class = "{
+                     'border-red-500':DisabledUsername,
+                     'border-gray-300 focus:border-gray-800':!DisabledUsername,
+                  }"
+                  maxlength="30"
               />
             </div>
 
@@ -231,7 +239,12 @@
               <input
                   v-model="editForm.realName"
                   type="text"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+                  class="w-full px-3 py-2 border-2  rounded-md focus:outline-none "
+                  :class = "{
+                     'border-red-500':DisabledRealname,
+                     'border-gray-300 focus:border-gray-800':!DisabledRealname,
+                  }"
+                  maxlength="20"
               />
             </div>
 
@@ -243,6 +256,7 @@
                   v-model="editForm.grade"
                   type="number"
                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+                  @input="limitNumberLength"
               />
             </div>
 
@@ -254,6 +268,7 @@
                   v-model="editForm.studentId"
                   type="text"
                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+                  maxlength="20"
               />
             </div>
 
@@ -265,7 +280,21 @@
                   v-model="editForm.codeforcesId"
                   type="text"
                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+                  maxlength="30"
               />
+            </div>
+
+            <div v-if="isSuperAdmin">
+              <label class="block text-sm font-medium text-gray-700 mb-1">用户身份</label>
+              <select
+                  v-model="editForm.role"
+                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+              >
+                <option :value="0">游客</option>
+                <option :value="1">普通成员</option>
+                <option :value="2">正式成员</option>
+                <option :value="3">管理员</option>
+              </select>
             </div>
           </div>
 
@@ -295,11 +324,17 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted, watch} from "vue";
 import Header from "@/components/Header.vue";
-import {get_profile} from "@/api/user";
+import {get_profile, set_profile,set_role} from "@/api/user";
 import {useRoute} from "vue-router";
+import {CheckLevel, GetTextColor, GetBgColor, NextLevelLimit} from "@/utils/level";
+import {useUserStore} from "@/store/user";
+
+// 登录信息
+const UserStore = useUserStore();
 
 // 用户信息
 const userInfo = ref({
+  userid:"",
   username: "",
   avatarUrl:
       "",
@@ -311,6 +346,9 @@ const userInfo = ref({
   experience: 0,
   maxExperience: 0,
   experiencePercentage: 20,
+  role : 0,
+  level: 0,
+  nextLevelXp : 0
 });
 
 const route = useRoute()
@@ -325,9 +363,12 @@ onMounted( async () => {
     console.log("用户头像为空");
     userInfo.value.avatarUrl = "/assets/default_avatar.png";
   }
+  // 用户ID
+  userInfo.value.userid = String(route.params.id);
   // 用户名
   userInfo.value.username = data.data.data.username;
   // 姓名
+  console.log("姓名"+data.data.data.real_name)
   userInfo.value.realName = format(data.data.data.real_name);
   // 年级
   userInfo.value.grade = data.data.data.grade;
@@ -339,6 +380,50 @@ onMounted( async () => {
   userInfo.value.codeforcesRating = data.data.data.codeforces_rating;
   // 经验
   userInfo.value.experience = data.data.data.xp;
+  // 权限角色
+  userInfo.value.role = data.data.data.role;
+
+  console.log("用户权限等级:",data.data.data.role)
+  // 等级
+  userInfo.value.level = CheckLevel(data.data.data.xp,data.data.data.role);
+  console.log("等级",userInfo.value.level);
+
+  // 渲染经验条
+  userInfo.value.nextLevelXp = NextLevelLimit(data.data.data.xp,data.data.data.role)
+  userInfo.value.maxExperience = userInfo.value.nextLevelXp;
+  if (userInfo.value.nextLevelXp==0) {
+    userInfo.value.experiencePercentage = 100;
+  } else {
+    userInfo.value.experiencePercentage = userInfo.value.experience * 100 / userInfo.value.nextLevelXp;
+    if (userInfo.value.experiencePercentage > 100) {
+      userInfo.value.experiencePercentage = 100;
+    }
+  }
+
+  console.log("我的权限",UserStore.getUserInfo().role)
+})
+
+// 判断是否可以编辑
+const isCanEdit = computed(() => {
+  if (UserStore.isLogin()) {
+    if (UserStore.getUserInfo().user_id === userInfo.value.userid) {
+      return true;
+    } else if (UserStore.getUserInfo().role >= 3) {
+      // 管理员可修改所有用户信息
+      return true;
+    }
+  }
+  return false;
+});
+
+// 判断是否是超级管理员
+const isSuperAdmin = computed(() => {
+  if (UserStore.isLogin()) {
+    if (UserStore.getUserInfo().role >= 4) {
+      return true;
+    }
+  }
+  return false;
 })
 
 const format = (s:string) => {
@@ -418,9 +503,10 @@ const editForm = ref({
   username: "",
   avatarUrl: "",
   realName: "",
-  grade: "",
+  grade: 0,
   studentId: "",
   codeforcesId: "",
+  role: 0,
 });
 
 // 年级选项
@@ -438,35 +524,75 @@ const closeEditModal = () => {
 };
 
 // 保存用户信息
-const saveUserInfo = () => {
+const saveUserInfo = async () => {
+  // 修改 role
+  if (userInfo.value.role != editForm.value.role) {
+    const data2 = await set_role({id: editForm.value.userid, role: editForm.value.role});
+    console.log("修改权限请求:",data2);
+  }
+  // 修改用户信息
+  const data = await set_profile({
+    id : editForm.value.userid,
+    username: editForm.value.username,
+    avatar: editForm.value.avatarUrl,
+    real_name: editForm.value.realName,
+    grade: editForm.value.grade,
+    student_no: editForm.value.studentId,
+    codeforces_id: editForm.value.codeforcesId,
+  })
+  console.log("修改用户请求:",data);
   // userInfo.value = { ...userInfo.value, ...editForm.value };
   // 刷新页面
   location.reload();
   closeEditModal();
 };
 
-// 处理头像更改
-const handleAvatarChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files[0]) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target && typeof e.target.result === "string") {
-        editForm.value.avatarUrl = e.target.result;
-      }
-    };
-    reader.readAsDataURL(target.files[0]);
-  }
-};
-
 const DisabledSaveButton = ref(false);
+const DisabledRealname = ref(false);
+const DisabledUsername = ref(false);
+
+// 不能包含 空格
+let reg_realname = new RegExp("^[^\\s]{2,20}$");
+let reg_username = new RegExp("^[^\\s]{0,30}$");
+
 // 监听编辑表单变化
 watch(
     () => editForm.value.realName,
     (newName) => {
-      DisabledSaveButton.value = !(newName.length >= 2 && newName.length <= 10);
+      if (!reg_realname.test(newName) || newName === "") {
+        DisabledRealname.value = true;
+        console.log(newName,"不符合");
+        handleDisabled()
+      } else {
+        DisabledRealname.value = false;
+        handleDisabled()
+      }
     }
 );
+watch(
+    () => editForm.value.username,
+    (newName) => {
+      if (!reg_username.test(newName) || newName === "") {
+        DisabledUsername.value = true;
+        console.log(newName,"不符合");
+        handleDisabled()
+      } else {
+        DisabledUsername.value = false;
+        handleDisabled()
+      }
+    }
+);
+
+const handleDisabled = () => {
+  DisabledSaveButton.value = DisabledRealname.value && DisabledUsername.value;
+}
+
+// 限制输入数字长度
+const limitNumberLength = (event) => {
+  if (event.target.value.length > 2) {
+    event.target.value = event.target.value.slice(0, 2);
+  }
+};
 
 // 根据rating获取颜色类
 const getRatingColorClass = () => {

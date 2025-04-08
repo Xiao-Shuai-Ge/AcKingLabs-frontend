@@ -93,7 +93,7 @@ const dropdownOptions = ref([
 
 // 前往个人主页
 const navigateToProfile = () => {
-  router.push("/profile/"+myID.value);
+  navigateTo("/profile/"+myID.value)
 };
 
 const UserStore = useUserStore();
@@ -107,7 +107,9 @@ const logout = () => {
 
 // 导航跳转方法
 const navigateTo = (path: string) => {
-  router.push(path);
+  router.push({
+    path: path,
+  });
 };
 
 // 当前激活的导航索引
@@ -122,6 +124,7 @@ const userName = ref("");
 const userAvatarUrl = ref(
     "/assets/not_logged_in.png",
 );
+const myRole = ref(0);
 
 onMounted(async () => {
   // 判断用户是否登录
@@ -131,6 +134,7 @@ onMounted(async () => {
     myID.value = localData.user_id;
     userName.value = localData.username;
     userAvatarUrl.value = localData.avatar;
+    myRole.value = localData.role;
     // 从服务器获取用户信息
     const data = await my_info();
     if (data.data.code != 20000) {
@@ -140,6 +144,7 @@ onMounted(async () => {
     } else {
       myID.value = data.data.data.id;
       userName.value = data.data.data.username;
+      myRole.value = data.data.data.role;
       if (data.data.data.avatar.length > 0) {
         userAvatarUrl.value = data.data.data.avatar;
       } else {
@@ -152,6 +157,7 @@ onMounted(async () => {
       user_id : myID.value,
       username : userName.value,
       avatar : userAvatarUrl.value,
+      role : myRole.value,
     });
   } else {
     console.log("用户未登录");
