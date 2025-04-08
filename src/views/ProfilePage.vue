@@ -279,7 +279,9 @@
             </button>
             <button
                 type="submit"
-                class="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 cursor-pointer whitespace-nowrap !rounded-button"
+                class="px-4 py-2 bg-gray-800 text-white rounded-md  cursor-pointer whitespace-nowrap !rounded-button"
+                :disabled = "DisabledSaveButton"
+                :class = "{'bg-gray-500':DisabledSaveButton, 'hover:bg-gray-700':!DisabledSaveButton}"
             >
               保存
             </button>
@@ -291,7 +293,7 @@
 </template>
 
 <script lang="ts" setup>
-import {ref, computed, onMounted} from "vue";
+import {ref, computed, onMounted, watch} from "vue";
 import Header from "@/components/Header.vue";
 import {get_profile} from "@/api/user";
 import {useRoute} from "vue-router";
@@ -456,6 +458,17 @@ const handleAvatarChange = (event: Event) => {
     reader.readAsDataURL(target.files[0]);
   }
 };
+
+const DisabledSaveButton = ref(false);
+// 监听编辑表单变化
+watch(editForm.value, (newValue, oldValue) => {
+  console.log(newValue);
+  if (newValue.realName.length === 0 || newValue.realName.length < 2 || newValue.realName.length > 10) {
+    DisabledSaveButton.value = false;
+  } else {
+    DisabledSaveButton.value = true;
+  }
+})
 
 // 根据rating获取颜色类
 const getRatingColorClass = () => {
