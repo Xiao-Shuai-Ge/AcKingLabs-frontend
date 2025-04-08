@@ -26,7 +26,7 @@ export default defineConfig({
       }
     }
   },
-  base: './', // 添加这一行
+  base: '/', // 添加这一行
   build: {
     assetsDir: 'assets',
   }
