@@ -461,14 +461,12 @@ const handleAvatarChange = (event: Event) => {
 
 const DisabledSaveButton = ref(false);
 // 监听编辑表单变化
-watch(editForm.value, (newValue, oldValue) => {
-  console.log(newValue);
-  if (newValue.realName.length === 0 || newValue.realName.length < 2 || newValue.realName.length > 10) {
-    DisabledSaveButton.value = false;
-  } else {
-    DisabledSaveButton.value = true;
-  }
-})
+watch(
+    () => editForm.value.realName,
+    (newName) => {
+      DisabledSaveButton.value = !(newName.length >= 2 && newName.length <= 10);
+    }
+);
 
 // 根据rating获取颜色类
 const getRatingColorClass = () => {
