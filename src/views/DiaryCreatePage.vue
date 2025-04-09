@@ -15,6 +15,7 @@
               v-model="postTitle"
               type="text"
               placeholder="请输入帖子标题"
+              maxlength="50"
               class="h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
         </div>
@@ -29,6 +30,7 @@
               type="text"
               placeholder=""
               disabled
+              maxlength="255"
               class="text-gray-500 h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
         </div>
@@ -144,7 +146,7 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted} from "vue";
 import Header from "@/components/Header.vue";
-import {getWeekday, getWeekCode} from "@/utils/week";
+import {getWeekday, GetWeekCode} from "@/utils/week";
 
 // 帖子数据
 const postTitle = ref("");
@@ -157,7 +159,7 @@ onMounted(()=>{
   // 自动识别当前是第几周
   let date = new Date(1744513921000);
 
-  postSource.value = getWeekCode(date).name;
+  postSource.value = GetWeekCode(date).name;
 })
 
 // 新增的隐私选项

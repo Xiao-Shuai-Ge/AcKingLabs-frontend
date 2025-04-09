@@ -13,6 +13,12 @@
       </button>
     </div>
 
+    <div class="text-gray-500 text-sm mb-4">
+      <p>记录学习时间: {{ GetStudyTimeString(new Date(WeekDisplayTime)).formToFormat }}</p>
+      <p>有效打卡时间: {{ GetValidSubmissionTime(new Date(WeekDisplayTime)).formToFormat }}</p>
+
+    </div>
+
     <!-- 周期选择区域 -->
     <div class="w-full max-w-3xl flex items-center justify-between mb-8">
       <button
@@ -94,6 +100,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from "vue";
 import Header from "@/components/Header.vue";
+import {GetStudyTimeString, GetValidSubmissionTime, GetWeekCode, GetWeekday} from "@/utils/week";
 
 // 当前周期
 const currentDate = ref(new Date("2025-04-09"));
@@ -104,20 +111,25 @@ const allPosts = ref<any[]>([]);
 const displayedPosts = ref<any[]>([]);
 const hasMorePosts = ref(true);
 
+const WeekDisplayTime = ref(0);
+
+onMounted(() => {
+  // 将WeekDisplayTime时间调到这周周一,无论是周一几点都在周记提交时间范围内
+  const date = new Date()
+  WeekDisplayTime.value = date.getTime();
+  const week = GetWeekday(date);
+  if (week <= 2) {
+    // 往回退
+    WeekDisplayTime.value -= (week-1) * 24 * 60 * 60 * 1000;
+  } else {
+    // 往前推
+    WeekDisplayTime.value += (8-week) * 24 * 60 * 60 * 1000;
+  }
+})
+
 // 计算当前周显示
 const currentWeekDisplay = computed(() => {
-  const year = currentDate.value.getFullYear();
-  const month = currentDate.value.getMonth() + 1;
-
-  // 计算当前是第几周
-  const firstDayOfYear = new Date(year, 0, 1);
-  const pastDaysOfYear =
-      (currentDate.value.getTime() - firstDayOfYear.getTime()) / 86400000;
-  const weekNumber = Math.ceil(
-      (pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7,
-  );
-
-  return `${year}年${month}月 第${weekNumber}周`;
+  return GetWeekCode(new Date(WeekDisplayTime.value)).name;
 });
 
 // 模拟获取周记数据
@@ -183,19 +195,11 @@ const generateRandomContent = (index: number, page: number) => {
 
 // 周期切换
 const prevWeek = () => {
-  const newDate = new Date(currentDate.value);
-  newDate.setDate(newDate.getDate() - 7);
-  currentDate.value = newDate;
-  currentPage.value = 1;
-  fetchWeeklyPosts(currentDate.value, currentPage.value);
+  WeekDisplayTime.value -= 7 * 24 * 60 * 60 * 1000;
 };
 
 const nextWeek = () => {
-  const newDate = new Date(currentDate.value);
-  newDate.setDate(newDate.getDate() + 7);
-  currentDate.value = newDate;
-  currentPage.value = 1;
-  fetchWeeklyPosts(currentDate.value, currentPage.value);
+  WeekDisplayTime.value += 7 * 24 * 60 * 60 * 1000;
 };
 
 // 加载更多
