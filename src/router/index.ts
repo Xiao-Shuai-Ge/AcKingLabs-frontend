@@ -20,6 +20,16 @@ const routes = [
         component: () => import('../views/DiaryPage.vue')
     },
     {
+        path: '/diary/:id',
+        name: 'DiaryDetail',
+        component: () => import('../views/DiaryDetailPage.vue')
+    },
+    {
+        path: '/diary/create',
+        name: 'DiaryCreate',
+        component: () => import('../views/DiaryCreatePage.vue')
+    },
+    {
         path: '/learn',
         name: 'Learn',
         component: () => import('../views/LearnPage.vue')
