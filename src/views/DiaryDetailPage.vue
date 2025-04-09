@@ -4,7 +4,7 @@
     <Header/>
     <div class="max-w-3xl mx-auto px-4 py-8 mt-16">
       <!-- 帖子区域 -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
+      <div class="bg-white rounded-lg shadow-sm border-2 border-gray-300 mb-8">
         <!-- 作者信息 -->
         <div class="flex items-center p-6 border-b border-gray-100">
           <img
@@ -40,16 +40,33 @@
       </div>
 
       <!-- 评论区域 -->
-      <div class="bg-gray-50 rounded-lg shadow-sm border border-gray-200">
+      <div class="rounded-lg shadow-sm">
         <div class="p-6 border-b border-gray-200">
           <h2 class="text-xl font-bold">
             评论 <span class="text-gray-500">({{ comments.length }})</span>
           </h2>
         </div>
 
+        <!-- 添加评论 -->
+        <div>
+          <div class="mb-3 border-2 border-gray-300 shadow-none">
+            <v-md-editor
+                v-model="newComment"
+                height="200px"
+                left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code"
+            />
+          </div>
+          <div class="mb-16">
+            <button class="w-20 h-8 rounded-md float-right bg-blue-500 text-white hover:bg-blue-400 cursor-pointer">
+              发布评论
+            </button>
+            <span class="text-gray-500 mt-1 mr-5 text-base float-right"> {{ newComment.length }} / 200</span>
+          </div>
+        </div>
+
         <!-- 评论列表 -->
-        <div class="divide-y divide-gray-200">
-          <div v-for="(comment, index) in comments" :key="index" class="p-6">
+        <div>
+          <div v-for="(comment, index) in comments" :key="index" class="p-6 border-2 border-gray-300 mt-2 rounded-md">
             <div class="flex items-start">
               <img
                   :src="comment.author.avatar"
@@ -74,33 +91,6 @@
                       :class="comment.isLiked ? 'fas' : 'far'"
                   ></i>
                   <span class="ml-1">{{ comment.likes }}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 添加评论 -->
-        <div class="p-6 border-t border-gray-200">
-          <div class="flex items-start">
-            <img
-                :src="currentUser.avatar"
-                alt="我的头像"
-                class="w-10 h-10 rounded-full object-cover"
-            />
-            <div class="ml-4 flex-1">
-              <textarea
-                  v-model="newComment"
-                  placeholder="写下你的评论..."
-                  class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-gray-500 min-h-[100px]"
-              ></textarea>
-              <div class="flex justify-end mt-3">
-                <button
-                    @click="addComment"
-                    class="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition cursor-pointer !rounded-button whitespace-nowrap"
-                    :disabled="!newComment.trim()"
-                >
-                  发布评论
                 </button>
               </div>
             </div>
