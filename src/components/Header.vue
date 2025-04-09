@@ -23,8 +23,8 @@
               @click="navigateTo(item.path)"
               :class="[
               'px-3 py-1.5 w-32 transition-all duration-200 cursor-pointer whitespace-nowrap !rounded-button text-center text-xl pt-3',
-              $route.path === item.path ? 'bg-black text-white border-b-4' : 'text-gray-800 hover:bg-gray-100 border-l-2 border-r-1',
-              $route.path === item.path ? item.color:'border-gray-100'
+              $route.path.startsWith(item.path) ? 'bg-black text-white border-b-4' : 'text-gray-800 hover:bg-gray-100 border-l-2 border-r-1',
+              $route.path.startsWith(item.path) ? item.color:'border-gray-100'
             ]"
           >
             <span class="relative z-10">{{ item.name }}</span>

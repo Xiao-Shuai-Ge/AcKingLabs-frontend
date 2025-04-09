@@ -37,32 +37,40 @@
       <div
           v-for="(post, index) in displayedPosts"
           :key="index"
-          class="bg-white border-2 border-gray-300 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-300"
+          class="bg-white border-2 border-gray-300 rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-300"
       >
-        <div class="flex items-center mb-4">
+        <div class="flex items-center mb-2">
           <img
               :src="post.avatarUrl"
               :alt="`${post.username}的头像`"
-              class="w-12 h-12 rounded-full object-cover object-top"
+              class="w-6 h-6 rounded-full object-cover object-top"
           />
-          <div class="ml-4">
-            <h3 class="font-medium text-lg">{{ post.username }}</h3>
-            <p class="text-sm text-gray-500">{{ post.publishDate }}</p>
+          <div class="ml-3">
+            <h3 class="font-medium text-base">{{ post.username }}</h3>
           </div>
         </div>
 
-        <p class="text-gray-800 mb-4 whitespace-pre-line text-ellipsis line-clamp-3">
+        <hr class="-mx-3 mb-2" />
+
+        <p class="text-gray-800 mb-1 text-2xl whitespace-pre-line text-ellipsis line-clamp-1">
+          {{ post.title }}
+        </p>
+
+        <p class="text-gray-500 mb-4 whitespace-pre-line text-ellipsis line-clamp-2">
           {{ post.content }}
         </p>
 
         <div class="flex items-center text-gray-500 text-sm">
-          <div class="flex items-center mr-6 cursor-pointer">
+          <div class="flex items-center mr-6">
             <i class="far fa-heart mr-1"></i>
             <span>{{ post.likes }}</span>
           </div>
-          <div class="flex items-center cursor-pointer">
+          <div class="flex items-center">
             <i class="far fa-comment mr-1"></i>
             <span>{{ post.comments }}</span>
+          </div>
+          <div class="flex items-center ml-auto">
+            <p class="text-sm text-gray-500">{{ post.publishDate }}</p>
           </div>
         </div>
       </div>
@@ -137,6 +145,7 @@ const fetchWeeklyPosts = (weekDate: Date, page: number) => {
         avatarUrl: `https://readdy.ai/api/search-image?query=professional portrait photo of asian person, minimalist style, black and white photography, high quality, professional lighting, neutral expression&width=200&height=200&flag=e0bbd1f573dc0512ee5db91d8c06a642&seq=${i}${page}&orientation=squarish`,
         publishDate: `${year}-${month.toString().padStart(2, "0")}-${(day - (i % 7)).toString().padStart(2, "0")}`,
         content: generateRandomContent(i, page),
+        title: `周记${(i + 1) * page}`,
         likes: Math.floor(Math.random() * 100),
         comments: Math.floor(Math.random() * 20),
       });
