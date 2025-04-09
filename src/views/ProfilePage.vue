@@ -213,6 +213,7 @@
                   v-model="editForm.avatarUrl"
                   type="text"
                   class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+                  maxlength="100"
               />
             </div>
 
