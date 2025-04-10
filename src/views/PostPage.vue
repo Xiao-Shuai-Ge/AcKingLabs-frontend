@@ -4,23 +4,44 @@
     <Header/>
     <div class="max-w-3xl mx-auto px-4 py-8 mt-16">
       <!-- 作者信息 -->
-      <div class="border-2 border-gray-800 rounded-lg inline-block mb-2 pr-5">
-        <div class="flex items-center p-3 border-b border-gray-100">
-          <img
-              :src="AuthorAvatar"
-              alt="作者头像"
-              class="w-8 h-8 rounded-full object-cover"
-          />
-          <div class="ml-2">
-            <h3 class="font-bold text-base">{{ AuthorName }}</h3>
-            <p class="text-gray-500 text-sm">{{ PublishDate }}</p>
+      <div class="inline-block mb-2">
+        <div class="flex items-center gap-2">
+          <div class="flex items-center p-3 pr-5 border-2 border-gray-800 rounded-lg h-14">
+            <img
+                :src="AuthorAvatar"
+                alt="作者头像"
+                class="w-8 h-8 rounded-full object-cover"
+            />
+            <div class="ml-2">
+              <h3 class="font-bold text-base">{{ AuthorName }}</h3>
+              <p class="text-gray-500 text-sm">{{ PublishDate }}</p>
+            </div>
           </div>
+
+          <button
+              v-if="CanEdit"
+              class="flex items-center p-3 border-2 border-gray-800 rounded-lg h-14 bg-blue-500 text-white hover:bg-blue-400"
+          >
+            编辑
+          </button>
+
+          <button
+              v-if="CanSetFeatured"
+              class="flex items-center p-3 border-2 border-gray-800 rounded-lg h-14 bg-yellow-400 text-white hover:bg-yellow-300"
+          >
+            设为精华
+          </button>
         </div>
       </div>
       <!-- 帖子区域 -->
       <div class="bg-white rounded-lg shadow-sm border-2 border-gray-800 mb-8">
+        <div class="m-6 mb-4 flex items-center gap-3">
+          <span class="text-3xl font-bold"> {{ Title }} </span>
+          <span class="text-gray-500 border-2 border-gray-500 rounded-md p-1 text-sm"> {{TypeName}} </span>
+          <span v-if="IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md p-1 text-sm">精华</span>
+          <span v-if="IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md p-1 text-sm">管理推荐</span>
+        </div>
 
-        <h1 class="text-3xl font-bold m-6">{{ Title }}</h1>
 
         <hr class="border-1 border-gray-800 mb-3" />
         <!-- 帖子内容 -->
@@ -112,6 +133,8 @@ import Header from "@/components/Header.vue";
 import {get_user_info} from "@/api/user";
 import {get_like_post, get_post_detail, like_post} from "@/api/post";
 import {useRoute} from "vue-router";
+import {PostTypeToName} from "@/utils/post";
+import {useUserStore} from "@/store/user";
 
 let UserMap = new Map();
 
@@ -144,24 +167,49 @@ const PublishDate = ref("");
 const Title = ref("");
 const Content = ref("");
 const Likes = ref(0);
+const Type = ref("")
+const TypeName = ref("")
+
+const IsAdminLike = ref(false);
+const IsFeatured = ref(false);
 
 const IsLiked = ref(false);
 
+const CanEdit = ref(false);
+const CanSetFeatured = ref(false);
+
+const UserStore = useUserStore();
 const route = useRoute()
 
 onMounted(async () => {
   // 获取帖子信息
   const data = await get_post_detail({id: String(route.params.id)});
+  console.log(data);
   AuthorID.value = data.data.data.user_id;
   Title.value = data.data.data.title;
   Content.value = data.data.data.content;
   Likes.value = data.data.data.likes;
+  IsAdminLike.value = data.data.data.is_admin_like;
+  IsFeatured.value = data.data.data.is_featured;
+  Type.value = data.data.data.type;
+  TypeName.value = PostTypeToName(Type.value);
+
+  IsFeatured.value = true
 
   // 获取作者信息
   const Author = await getUserInfo(AuthorID.value);
   console.log(Author);
   AuthorName.value = Author.username;
   AuthorAvatar.value = Author.avatar;
+
+  // 是否允许编辑
+  if (UserStore.getUserInfo().user_id == AuthorID.value) {
+    CanEdit.value = true;
+  }
+  // 是否允许设置精华
+  if (UserStore.getUserInfo().role >= 3) {
+    CanSetFeatured.value = true;
+  }
 
   // 点赞信息
   const like_resp = await get_like_post({post_id: String(route.params.id)});
