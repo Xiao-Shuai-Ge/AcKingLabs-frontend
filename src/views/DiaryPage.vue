@@ -101,6 +101,7 @@
 import { ref, computed, onMounted } from "vue";
 import Header from "@/components/Header.vue";
 import {GetStudyTimeString, GetValidSubmissionTime, GetWeekCode, GetWeekday} from "@/utils/week";
+import router from "@/router";
 
 // 当前周期
 const currentDate = ref(new Date("2025-04-09"));
@@ -212,9 +213,7 @@ const loadMorePosts = () => {
 
 // 跳转到发布页面
 const navigateToPublish = () => {
-  alert("跳转到发布周记页面");
-  // 实际项目中可以使用路由跳转
-  // router.push('/publish');
+  router.push('/diary/create');
 };
 
 // 初始化加载数据

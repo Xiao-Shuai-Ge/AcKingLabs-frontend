@@ -16,7 +16,8 @@
               type="text"
               placeholder="请输入帖子标题"
               maxlength="50"
-              class="h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+              disabled
+              class="text-gray-500 h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
         </div>
 
@@ -43,7 +44,12 @@
           <div class="w-1/3 float-left relative">
             <button
                 @click="toggleTypeDropdown"
-                class="h-10 w-full flex items-center justify-between border border-gray-300 rounded-button px-2 py-1 bg-white cursor-pointer whitespace-nowrap"
+                class="h-10 w-full flex items-center justify-between border border-gray-300 rounded-button px-2 py-1 cursor-pointer whitespace-nowrap"
+                :disabled = "typeDisabled"
+                :class = "{
+                  'bg-gray-50 text-gray-500' : typeDisabled,
+                  'bg-white' : !typeDisabled
+                }"
             >
               <span>{{ selectedType || '请选择帖子类型' }}</span>
               <i class="fas fa-chevron-down text-gray-500"></i>
@@ -87,9 +93,15 @@
         </div>
 
         <div class="flex flex-col gap-2 flex-grow">
-          <label for="content" class="text-sm font-medium text-gray-700"
-          >内容</label
-          >
+          <label for="content" class="text-sm font-medium text-gray-700">
+            内容
+            <span
+                class="float-right"
+                :class="{
+                  'text-red-500': postContent.length === 0 || postContent.length > 5000,
+                }"
+            >{{ postContent.length }}  / 5000</span>
+          </label>
           <div class="shadow-white">
             <v-md-editor
                 v-model="postContent"
@@ -104,13 +116,20 @@
         <div class="flex gap-4 mt-4 mb-8">
           <button
               @click="publishPost"
-              class="bg-black text-white px-6 py-3 rounded-button hover:bg-gray-800 transition-colors cursor-pointer whitespace-nowrap"
+              :disabled="saveDisabled"
+              class="bg-black text-white px-6 py-3 rounded-button transition-colors whitespace-nowrap"
+              :class = "{
+                'bg-gray-500 cursor-not-allowed': saveDisabled,
+                'bg-black hover:bg-gray-800 cursor-pointer': !saveDisabled,
+              }"
           >
             发布帖子
           </button>
           <button
               @click="saveDraft"
+              :disabled="saveDisabled"
               class="border border-gray-300 px-6 py-3 rounded-button hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
+
           >
             保存草稿
           </button>
@@ -147,19 +166,22 @@
 import {ref, computed, onMounted} from "vue";
 import Header from "@/components/Header.vue";
 import {getWeekday, GetWeekCode} from "@/utils/week";
+import {create_post} from "@/api/post";
+import router from "@/router";
 
 // 帖子数据
 const postTitle = ref("");
 const postContent = ref("");
 const postSource = ref("");
-const selectedType = ref("");
+const selectedType = ref("周记");
 const showTypeDropdown = ref(false);
 
 onMounted(()=>{
   // 自动识别当前是第几周
-  let date = new Date(1744513921000);
+  let date = new Date(1744541827000);
 
   postSource.value = GetWeekCode(date).name;
+  postTitle.value = GetWeekCode(date).name+" 学习周记"
 })
 
 // 新增的隐私选项
@@ -182,6 +204,10 @@ const postTypes = [
   "周记",
 ];
 
+const typesCode : Record<string,string> = {
+  "周记" : "diary",
+}
+
 // 当前日期
 const currentDate = computed(() => {
   const now = new Date();
@@ -199,30 +225,38 @@ const selectType = (type: string) => {
   showTypeDropdown.value = false;
 };
 
+// 默认禁用
+const typeDisabled = ref(true);
+
+const saveDisabled = computed(() => {
+  console.log("?")
+  if (postTitle.value.length == 0 || postSource.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 5000) {
+    return true;
+  }
+  return false;
+})
+
+
 // 发布帖子
-const publishPost = () => {
-  if (!postTitle.value) {
-    alert("请输入帖子标题");
-    return;
+const publishPost = async () => {
+  const data = await create_post({
+    title: postTitle.value,
+    content: postContent.value,
+    type : typesCode[selectedType.value],
+    source: postSource.value,
+    is_private: isPrivate.value,
+  })
+  console.log(data)
+  if (data.data.code != 20000) {
+    alert("发布失败，请稍后再试！");
   }
-
-  if (!selectedType.value) {
-    alert("请选择帖子类型");
-    return;
-  }
-
-  if (!postContent.value) {
-    alert("请输入帖子内容");
-    return;
-  }
-
-  alert("帖子发布成功！");
-  // 这里可以添加实际的发布逻辑
+  // 跳转
+  await router.push("/diary/" + data.data.data.id)
 };
 
 // 保存草稿
 const saveDraft = () => {
-  alert("草稿已保存！");
+  alert("草稿已保存到本地！");
   // 这里可以添加实际的保存草稿逻辑
 };
 </script>
