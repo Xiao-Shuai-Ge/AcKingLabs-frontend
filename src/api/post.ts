@@ -15,3 +15,13 @@ export const get_post_detail = (data : {id: string}) => {
         params: data
     })
 }
+
+export const get_like_post = (data : {post_id: string}) => {
+    return http.get(`/api/post/like-post`,{
+        params: data
+    })
+}
+
+export const like_post = (data : {post_id: string}) => {
+    return http.post(`/api/post/like-post`,data)
+}

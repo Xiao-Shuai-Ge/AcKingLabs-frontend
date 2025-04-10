@@ -110,7 +110,7 @@
 import {onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
 import {get_user_info} from "@/api/user";
-import {get_post_detail} from "@/api/post";
+import {get_like_post, get_post_detail, like_post} from "@/api/post";
 import {useRoute} from "vue-router";
 
 let UserMap = new Map();
@@ -143,7 +143,7 @@ const PublishDate = ref("");
 
 const Title = ref("");
 const Content = ref("");
-const Likes = ref("");
+const Likes = ref(0);
 
 const IsLiked = ref(false);
 
@@ -162,6 +162,11 @@ onMounted(async () => {
   console.log(Author);
   AuthorName.value = Author.username;
   AuthorAvatar.value = Author.avatar;
+
+  // 点赞信息
+  const like_resp = await get_like_post({post_id: String(route.params.id)});
+  //console.log(like_resp);
+  IsLiked.value = like_resp.data.data.is_like;
 })
 
 interface comment {
@@ -178,14 +183,22 @@ interface comment {
 // 评论数据
 const Comments = ref<comment[]>()
 
-
-
 // 新评论内容
 const newComment = ref("");
 
 // 点赞帖子
 const ClickLike = () => {
-
+  // 先更新本地显示，不然看着别扭
+  if (IsLiked.value) {
+    IsLiked.value = false;
+    Likes.value--;
+  } else {
+    IsLiked.value = true;
+    Likes.value++;
+  }
+  // 发送点赞请求
+  const data = like_post({post_id: String(route.params.id)});
+  //console.log(data)
 };
 
 // 点赞评论
