@@ -13,8 +13,10 @@
                 class="w-8 h-8 rounded-full object-cover"
             />
             <div class="ml-2">
-              <h3 class="font-bold text-base">{{ AuthorName }}</h3>
-              <p class="text-gray-500 text-sm">{{ PublishDate }}</p>
+              <h3
+                  class="font-bold text-base"
+                  :class = GetTextColor(AuthorLevel)
+              >{{ AuthorName }}</h3>
             </div>
           </div>
 
@@ -52,6 +54,7 @@
           </div>
         </div>
 
+        <hr class="border-1 border-gray-800 mb-3" />
         <!-- 点赞区域 -->
         <div class="px-6 pb-6 flex items-center">
           <button
@@ -62,14 +65,15 @@
             <i class="fa-heart" :class="IsLiked ? 'fas' : 'far'"></i>
             <span class="ml-2">{{ Likes }}</span>
           </button>
+          <p class="text-gray-500 text-sm ml-auto">{{ PublishDate }}</p>
         </div>
       </div>
 
       <!-- 评论区域 -->
-      <div class="rounded-lg shadow-sm">
+      <div class="mb-64">
         <div class="p-6 border-b border-gray-200">
           <h2 class="text-xl font-bold">
-            评论 <span class="text-gray-500">({{ Comments }})</span>
+            评论 <span class="text-gray-500">({{ CommentCount }})</span>
           </h2>
         </div>
 
@@ -83,12 +87,22 @@
             />
           </div>
           <div class="mb-16">
-            <button class="w-20 h-8 rounded-md float-right bg-blue-500 text-white hover:bg-blue-400 cursor-pointer">
+            <button
+                class="w-20 h-8 rounded-md float-right  text-white"
+                @click = "CreateComment"
+                :disabled = "CommentDisabled"
+                :class = "{
+                  'bg-blue-500 hover:bg-blue-400 cursor-pointer': !CommentDisabled,
+                  'bg-blue-300 cursor-not-pointer' : CommentDisabled,
+                }"
+            >
               发布评论
             </button>
-            <span class="text-gray-500 mt-1 mr-5 text-base float-right"> {{ newComment.length }} / 200</span>
+            <span class="text-gray-500 mt-1 mr-5 text-base float-right"> {{ newComment.length }} / 1000</span>
           </div>
         </div>
+
+        <div id="targetLocation"></div>
 
         <!-- 评论列表 -->
         <div>
@@ -101,14 +115,18 @@
               />
               <div class="ml-4 flex-1">
                 <div class="flex justify-between items-center mb-2">
-                  <h4 class="font-bold">{{ comment.AuthorName }}</h4>
+                  <h4 class="font-bold" :class="GetTextColor(comment.AuthorLevel)">{{ comment.AuthorName }}</h4>
                   <span class="text-gray-500 text-sm"
                   >{{ comment.PublishDate }}</span
                   >
                 </div>
-                <p class="text-gray-800 mb-3">{{ comment.Content }}</p>
+                <div class="-m-8 -mt-4">
+                  <v-md-preview :text="comment.Content"></v-md-preview>
+                </div>
+
+<!--                <p class="text-gray-800 mb-3">{{ comment.Content }}</p>-->
                 <button
-                    @click="ClickCommentLike()"
+                    @click="ClickCommentLike(comment)"
                     class="flex items-center text-sm cursor-pointer !rounded-button whitespace-nowrap"
                     :class="{ 'text-red-500': comment.IsLiked, 'text-gray-500': !comment.IsLiked }"
                 >
@@ -122,19 +140,42 @@
             </div>
           </div>
         </div>
+
+        <!-- 加载更多按钮 -->
+        <div class="flex justify-center mt-8" v-if="HasMoreComments">
+          <button
+              class="px-6 py-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all duration-300 flex items-center cursor-pointer !rounded-button whitespace-nowrap"
+              @click="LoadMoreComments(5)"
+              :disabled="IsLoading"
+          >
+            <span v-if="!IsLoading">加载更多</span>
+            <i v-else class="fas fa-spinner fa-spin mr-2"></i>
+            <span v-if="IsLoading">加载中...</span>
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
 import {get_user_info} from "@/api/user";
-import {get_like_post, get_post_detail, like_post} from "@/api/post";
+import {
+  create_comment,
+  get_like_comment,
+  get_like_post,
+  get_more_comment,
+  get_post_detail, like_comment,
+  like_post
+} from "@/api/post";
 import {useRoute} from "vue-router";
 import {PostTypeToName} from "@/utils/post";
 import {useUserStore} from "@/store/user";
+import {TimestampFormat} from "@/utils/week";
+import {CheckLevel, GetTextColor} from "@/utils/level";
 
 let UserMap = new Map();
 
@@ -144,6 +185,7 @@ interface UserInfo {
   avatar: string;
   role : number;
   xp : number;
+  level : number;
 }
 
 const getUserInfo = async (id : string) : Promise<UserInfo> => {
@@ -152,9 +194,10 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
     // 不存在，异步请求用户信息
     const resp = await get_user_info({id:id})
     data = resp.data.data
+    data.level = CheckLevel(data.xp,data.role);
     UserMap.set(id, data)
   }
-  console.log(data)
+  //console.log(data)
   return data
 }
 //-------------------------------------------------------------------
@@ -162,11 +205,17 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
 const AuthorID = ref("")
 const AuthorName = ref("");
 const AuthorAvatar = ref("");
+const AuthorRole = ref(0);
+const AuthorXp = ref(0);
+const AuthorLevel = ref(0);
+
+const PublishTime = ref(0);
 const PublishDate = ref("");
 
 const Title = ref("");
 const Content = ref("");
 const Likes = ref(0);
+const CommentCount = ref(0);
 const Type = ref("")
 const TypeName = ref("")
 
@@ -189,10 +238,14 @@ onMounted(async () => {
   Title.value = data.data.data.title;
   Content.value = data.data.data.content;
   Likes.value = data.data.data.likes;
+  CommentCount.value = data.data.data.comments;
   IsAdminLike.value = data.data.data.is_admin_like;
   IsFeatured.value = data.data.data.is_featured;
   Type.value = data.data.data.type;
   TypeName.value = PostTypeToName(Type.value);
+  PublishTime.value = data.data.data.created_at;
+  console.log(PublishTime.value)
+  PublishDate.value = TimestampFormat(new Date(PublishTime.value));
 
   IsFeatured.value = true
 
@@ -201,6 +254,9 @@ onMounted(async () => {
   console.log(Author);
   AuthorName.value = Author.username;
   AuthorAvatar.value = Author.avatar;
+  AuthorXp.value = Author.xp;
+  AuthorRole.value = Author.role;
+  AuthorLevel.value = CheckLevel(AuthorXp.value,AuthorRole.value);
 
   // 是否允许编辑
   if (UserStore.getUserInfo().user_id == AuthorID.value) {
@@ -213,13 +269,21 @@ onMounted(async () => {
 
   // 点赞信息
   const like_resp = await get_like_post({post_id: String(route.params.id)});
-  //console.log(like_resp);
+  console.log(like_resp);
   IsLiked.value = like_resp.data.data.is_like;
+
+  // 刷新评论
+  LoadMoreComments(10);
 })
 
 interface comment {
+  ID : string;
   AuthorName: string;
   AuthorAvatar: string;
+  AuthorXp : number;
+  AuthorLevel : number;
+
+  PublishTime : number;
   PublishDate: string;
 
   Content: string;
@@ -228,8 +292,15 @@ interface comment {
   IsLiked: boolean;
 }
 
+const CommentDisabled = computed(() => {
+  if (newComment.value.length > 1000 || newComment.value.trim() === "") {
+    return true;
+  }
+  return false;
+})
+
 // 评论数据
-const Comments = ref<comment[]>()
+const Comments = ref<comment[]>([])
 
 // 新评论内容
 const newComment = ref("");
@@ -249,10 +320,85 @@ const ClickLike = () => {
   //console.log(data)
 };
 
-// 点赞评论
-const ClickCommentLike = () => {
+const HasMoreComments = ref(true);
+const IsLoading = ref(false);
+const BeforeID = ref("9223372036854775807");
 
+const CommentMAP = new Map<string,boolean>();
+
+const LoadMoreComments = async (count : number) => {
+  IsLoading.value = true;
+  const data = await get_more_comment({
+    post_id: String(route.params.id),
+    before_id: BeforeID.value,
+    count: count
+  });
+  console.log(data);
+  if (data.data.data.length > 0) {
+    // 循环加入评论列表
+    for (const comment of data.data.data.comments) {
+      if (!CommentMAP.has(comment.id)) {
+        CommentMAP.set(comment.id, true);
+        const Author = await getUserInfo(comment.user_id);
+        const isLiked = await get_like_comment({comment_id: comment.id});
+        console.log(isLiked);
+        Comments.value.push({
+          ID : comment.id,
+          AuthorName: Author.username,
+          AuthorAvatar: Author.avatar,
+          AuthorXp: Author.xp,
+          AuthorLevel: AuthorLevel.value,
+          PublishTime: comment.created_at,
+          PublishDate: TimestampFormat(new Date(comment.created_at)),
+          Content: comment.content,
+          Likes: comment.likes,
+          IsLiked: isLiked.data.data.is_like,
+        });
+        BeforeID.value = comment.id
+      }
+    }
+  }
+  IsLoading.value = false;
+  if (data.data.data.length < count ) {
+    HasMoreComments.value = false;
+  }
+}
+
+const CreateComment = async () => {
+  const data = await create_comment({
+    post_id: String(route.params.id),
+    content: newComment.value,
+  })
+  if (data.data.code != 20000) {
+    // 错误
+    return
+  }
+  // 刷新评论
+  HasMoreComments.value = true;
+  Comments.value=[];
+  CommentMAP.clear();
+  BeforeID.value = "9223372036854775807";
+  await LoadMoreComments(10);
+}
+
+// 点赞评论
+const ClickCommentLike = async (selectComment : comment) => {
+  // 先更新本地显示，不然看着别扭
+  if (selectComment.IsLiked) {
+    selectComment.IsLiked = false;
+    selectComment.Likes--;
+  } else {
+    selectComment.IsLiked = true;
+    selectComment.Likes++;
+  }
+  const data = await like_comment({comment_id: selectComment.ID});
 };
+
+//测试，循环点赞
+// setInterval(async () => {
+//   const data = await like_comment({comment_id: "1910348998087020544"});
+//   console.log(data);
+// }, 100)
 
 </script>
 

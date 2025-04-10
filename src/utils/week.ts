@@ -70,5 +70,5 @@ export const GetStudyTimeString = (date: Date) => {
 }
 
 export const TimestampFormat = (date: Date) => {
-    return date.getFullYear().toString()+"-"+(date.getMonth()+1).toString()+"-"+date.getDate().toString()+" "+date.getHours().toString()+":"+date.getMinutes().toString()+":"+date.getSeconds().toString();
+    return date.getFullYear().toString()+"-"+(date.getMonth()+1).toString()+"-"+date.getDate().toString()+" "+date.getHours().toString()+":"+date.getMinutes().toString().padStart(2, '0')+":"+date.getSeconds().toString().padStart(2, '0');
 }

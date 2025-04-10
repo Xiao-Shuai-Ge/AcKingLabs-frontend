@@ -25,3 +25,30 @@ export const get_like_post = (data : {post_id: string}) => {
 export const like_post = (data : {post_id: string}) => {
     return http.post(`/api/post/like-post`,data)
 }
+
+export const create_comment = (data : {
+    post_id: string,
+    content: string,
+}) => {
+    return http.post('/api/post/comment',data)
+}
+
+export const get_more_comment = (data : {
+    post_id: string
+    before_id: string
+    count: number
+}) => {
+    return http.get('/api/post/comment-more',{
+        params: data
+    })
+}
+
+export const get_like_comment = (data : {comment_id: string}) => {
+    return http.get(`/api/post/like-comment`,{
+        params: data
+    })
+}
+
+export const like_comment = (data : {comment_id: string}) => {
+    return http.post(`/api/post/like-comment`,data)
+}
