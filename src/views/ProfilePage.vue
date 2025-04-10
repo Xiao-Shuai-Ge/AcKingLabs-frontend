@@ -325,7 +325,7 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted, watch} from "vue";
 import Header from "@/components/Header.vue";
-import {get_profile, set_profile,set_role} from "@/api/user";
+import {get_user_profile, set_profile,set_role} from "@/api/user";
 import {useRoute} from "vue-router";
 import {CheckLevel, GetTextColor, GetBgColor, NextLevelLimit} from "@/utils/level";
 import {useUserStore} from "@/store/user";
@@ -355,7 +355,7 @@ const userInfo = ref({
 const route = useRoute()
 
 onMounted( async () => {
-  const data = await get_profile({id: String(route.params.id)})
+  const data = await get_user_profile({id: String(route.params.id)})
   console.log(data)
   // 头像
   if (data.data.data.avatar.length > 0) {

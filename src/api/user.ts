@@ -4,7 +4,15 @@ export const my_info = () => {
     return http.get('/api/user/my-info')
 }
 
-export const get_profile = (data : {id: string}) => {
+export const get_user_info = (data : {id: string}) => {
+    return http.get('/api/user/info',{
+        params: {
+            id: data.id
+        }
+    })
+}
+
+export const get_user_profile = (data : {id: string}) => {
     return http.get('/api/user/profile',{
         params: {
             id: data.id

@@ -3,24 +3,29 @@
   <div class="min-h-screen bg-white text-black">
     <Header/>
     <div class="max-w-3xl mx-auto px-4 py-8 mt-16">
-      <!-- 帖子区域 -->
-      <div class="bg-white rounded-lg shadow-sm border-2 border-gray-300 mb-8">
-        <!-- 作者信息 -->
-        <div class="flex items-center p-6 border-b border-gray-100">
+      <!-- 作者信息 -->
+      <div class="border-2 border-gray-800 rounded-lg inline-block mb-2 pr-5">
+        <div class="flex items-center p-3 border-b border-gray-100">
           <img
               :src="AuthorAvatar"
               alt="作者头像"
-              class="w-12 h-12 rounded-full object-cover"
+              class="w-8 h-8 rounded-full object-cover"
           />
-          <div class="ml-4">
-            <h3 class="font-bold text-lg">{{ AuthorName }}</h3>
+          <div class="ml-2">
+            <h3 class="font-bold text-base">{{ AuthorName }}</h3>
             <p class="text-gray-500 text-sm">{{ PublishDate }}</p>
           </div>
         </div>
+      </div>
+      <!-- 帖子区域 -->
+      <div class="bg-white rounded-lg shadow-sm border-2 border-gray-800 mb-8">
 
+        <h1 class="text-3xl font-bold m-6">{{ Title }}</h1>
+
+        <hr class="border-1 border-gray-800 mb-3" />
         <!-- 帖子内容 -->
         <div class="p-6">
-          <h1 class="text-2xl font-bold mb-10">{{ Title }}</h1>
+
           <div class="prose max-w-none -m-8">
             <v-md-preview :text="Content"></v-md-preview>
           </div>
@@ -49,7 +54,7 @@
 
         <!-- 添加评论 -->
         <div>
-          <div class="mb-3 border-2 border-gray-300 shadow-none">
+          <div class="mb-3 border-2 border-gray-800 shadow-none">
             <v-md-editor
                 v-model="newComment"
                 height="200px"
@@ -102,16 +107,36 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue";
+import {onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
+import {get_user_info} from "@/api/user";
+import {get_post_detail} from "@/api/post";
+import {useRoute} from "vue-router";
 
-// 当前用户信息
-const currentUser = {
-  name: "当前用户",
-  avatar:
-      "https://public.readdy.ai/ai/img_res/fd5a6e9230c4dc230d6cad7246a0f53f.jpg",
-};
+let UserMap = new Map();
 
+// 用户信息缓存--------------------------------------------------------
+interface UserInfo {
+  username: string;
+  avatar: string;
+  role : number;
+  xp : number;
+}
+
+const getUserInfo = async (id : string) : Promise<UserInfo> => {
+  let data = UserMap.get(id)
+  if (!data) {
+    // 不存在，异步请求用户信息
+    const resp = await get_user_info({id:id})
+    data = resp.data.data
+    UserMap.set(id, data)
+  }
+  console.log(data)
+  return data
+}
+//-------------------------------------------------------------------
+
+const AuthorID = ref("")
 const AuthorName = ref("");
 const AuthorAvatar = ref("");
 const PublishDate = ref("");
@@ -121,6 +146,23 @@ const Content = ref("");
 const Likes = ref("");
 
 const IsLiked = ref(false);
+
+const route = useRoute()
+
+onMounted(async () => {
+  // 获取帖子信息
+  const data = await get_post_detail({id: String(route.params.id)});
+  AuthorID.value = data.data.data.user_id;
+  Title.value = data.data.data.title;
+  Content.value = data.data.data.content;
+  Likes.value = data.data.data.likes;
+
+  // 获取作者信息
+  const Author = await getUserInfo(AuthorID.value);
+  console.log(Author);
+  AuthorName.value = Author.username;
+  AuthorAvatar.value = Author.avatar;
+})
 
 interface comment {
   AuthorName: string;
@@ -135,6 +177,7 @@ interface comment {
 
 // 评论数据
 const Comments = ref<comment[]>()
+
 
 
 // 新评论内容
