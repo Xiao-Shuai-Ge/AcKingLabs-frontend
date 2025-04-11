@@ -52,3 +52,15 @@ export const get_like_comment = (data : {comment_id: string}) => {
 export const like_comment = (data : {comment_id: string}) => {
     return http.post(`/api/post/like-comment`,data)
 }
+
+export const get_more_post = (data : {
+    type: string
+    source: string
+    before_id: string
+    by : string
+    count: number
+}) => {
+    return http.get('/api/post/post-more',{
+        params: data
+    })
+}

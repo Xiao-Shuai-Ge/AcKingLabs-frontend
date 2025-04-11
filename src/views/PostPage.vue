@@ -39,9 +39,10 @@
       <div class="bg-white rounded-lg shadow-sm border-2 border-gray-800 mb-8">
         <div class="m-6 mb-4 flex items-center gap-3">
           <span class="text-3xl font-bold"> {{ Title }} </span>
-          <span class="text-gray-500 border-2 border-gray-500 rounded-md p-1 text-sm"> {{TypeName}} </span>
-          <span v-if="IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md p-1 text-sm">精华</span>
-          <span v-if="IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md p-1 text-sm">管理推荐</span>
+          <span class="text-gray-500 border-2 border-gray-500 rounded-md px-1 text-sm"> {{TypeName}} </span>
+          <span v-if="IsPrivate" class="text-blue-500 border-2 border-blue-500 rounded-md px-1 text-sm">私密</span>
+          <span v-if="IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
+          <span v-if="IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md px-1 text-sm">管理推荐</span>
         </div>
 
 
@@ -144,7 +145,7 @@
         <!-- 加载更多按钮 -->
         <div class="flex justify-center mt-8" v-if="HasMoreComments">
           <button
-              class="px-6 py-3 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-all duration-300 flex items-center cursor-pointer !rounded-button whitespace-nowrap"
+              class="px-6 py-3 border-2 border-gray-800 text-gray-800 rounded-md font-medium hover:bg-gray-100 transition-all duration-300 flex items-center cursor-pointer !rounded-button whitespace-nowrap"
               @click="LoadMoreComments(5)"
               :disabled="IsLoading"
           >
@@ -153,7 +154,6 @@
             <span v-if="IsLoading">加载中...</span>
           </button>
         </div>
-
       </div>
     </div>
   </div>
@@ -181,9 +181,9 @@ import {CheckLevel, GetTextColor} from "@/utils/level";
 import { useMessage } from '@/store/message'
 const { addMessage } = useMessage()
 
+// 用户信息缓存--------------------------------------------------------
 let UserMap = new Map();
 
-// 用户信息缓存--------------------------------------------------------
 interface UserInfo {
   username: string;
   avatar: string;
@@ -225,6 +225,7 @@ const TypeName = ref("")
 
 const IsAdminLike = ref(false);
 const IsFeatured = ref(false);
+const IsPrivate = ref(false);
 
 const IsLiked = ref(false);
 
@@ -243,6 +244,7 @@ onMounted(async () => {
   Content.value = data.data.data.content;
   Likes.value = data.data.data.likes;
   CommentCount.value = data.data.data.comments;
+  IsPrivate.value = data.data.data.is_private;
   IsAdminLike.value = data.data.data.is_admin_like;
   IsFeatured.value = data.data.data.is_featured;
   Type.value = data.data.data.type;

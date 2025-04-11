@@ -15,7 +15,7 @@
               v-model="postTitle"
               type="text"
               placeholder="请输入帖子标题"
-              maxlength="50"
+              maxlength="30"
               disabled
               class="text-gray-500 h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
