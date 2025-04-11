@@ -253,8 +253,12 @@ const publishPost = async () => {
     is_private: isPrivate.value,
   })
   console.log(data)
-  if (data.data.code != 20000) {
+  if (data.data.code == -20008) {
+    addMessage('请先实名认证!', 'error')
+    return
+  } else if (data.data.code != 20000) {
     addMessage('发布失败', 'error')
+    return
   }
   // 删除草稿内容
   localStorage.removeItem("draft-diary-content");

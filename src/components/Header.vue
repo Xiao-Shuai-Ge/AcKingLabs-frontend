@@ -41,7 +41,8 @@
           @mouseleave="closeDropdown()"
       >
         <div class="flex items-center cursor-pointer">
-          <span class="text-sm text-gray-800 mr-2">{{ userName }}</span>
+          <span v-if="myLevel === 0" class="text-sm text-gray-500 mr-1">(未实名)</span>
+          <span class="text-base font-bold mr-2" :class = GetTextColor(myLevel)>{{ userName }}</span>
           <div class="w-9 h-9 rounded-full overflow-hidden bg-gray-200 mr-2.5">
             <img
                 :src="userAvatarUrl"
@@ -78,6 +79,7 @@ import {onMounted, ref} from "vue";
 import router from "@/router";
 import {my_info} from "@/api/user";
 import {useUserStore} from "@/store/user";
+import {CheckLevel, GetTextColor} from "@/utils/level";
 
 // 导航项
 const navItems = ref([
@@ -124,7 +126,10 @@ const userName = ref("");
 const userAvatarUrl = ref(
     "/assets/not_logged_in.png",
 );
+
+const myXp = ref(0);
 const myRole = ref(0);
+const myLevel = ref(0);
 
 onMounted(async () => {
   // 判断用户是否登录
@@ -135,6 +140,8 @@ onMounted(async () => {
     userName.value = localData.username;
     userAvatarUrl.value = localData.avatar;
     myRole.value = localData.role;
+    myXp.value = localData.xp;
+    myLevel.value = CheckLevel(myXp.value,myRole.value);
     // 从服务器获取用户信息
     const data = await my_info();
     if (data.data.code != 20000) {
@@ -158,6 +165,7 @@ onMounted(async () => {
       username : userName.value,
       avatar : userAvatarUrl.value,
       role : myRole.value,
+      xp : myXp.value,
     });
   } else {
     console.log("用户未登录");

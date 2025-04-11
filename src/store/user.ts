@@ -7,6 +7,7 @@ export interface User {
   atoken: string;
   rtoken: string;
   role: number;
+  xp: number;
   // 其他用户属性
 }
 
@@ -17,6 +18,7 @@ export const useUserStore = defineStore("user", {
       username: "",
       avatar: "",
       role: 0,
+      xp: 0,
       atoken: "",
       rtoken: "",
     } as User,
@@ -28,9 +30,10 @@ export const useUserStore = defineStore("user", {
         username: this.currentUser.username,
         avatar: this.currentUser.avatar,
         role: this.currentUser.role,
+        xp : this.currentUser.xp
       }
     },
-    setUserInfo(data: { user_id: string, username: string, avatar: string , role: number}) {
+    setUserInfo(data: { user_id: string, username: string, avatar: string , role: number , xp: number }) {
       // 如果有token本地信息，更新
       this.getAtoken()
       this.getRtoken()
@@ -39,6 +42,7 @@ export const useUserStore = defineStore("user", {
       this.currentUser.username = data.username;
       this.currentUser.avatar = data.avatar;
       this.currentUser.role = data.role;
+      this.currentUser.xp = data.xp;
     },
     setAtoken(atoken: string) {
       localStorage.setItem("atoken", atoken);
@@ -51,7 +55,7 @@ export const useUserStore = defineStore("user", {
     logout() {
       localStorage.removeItem("atoken");
       localStorage.removeItem("rtoken");
-      this.setUserInfo({ user_id: "", username: "", avatar: "" , role: 0 });
+      this.setUserInfo({ user_id: "", username: "", avatar: "" , role: 0 , xp: 0 });
     },
     getAtoken() {
       if (!this.currentUser.atoken) {

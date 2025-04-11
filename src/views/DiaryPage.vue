@@ -89,7 +89,12 @@
 
         <div class="flex items-center text-gray-500 text-sm">
           <div class="flex items-center mr-6">
-            <i class="far fa-heart mr-1"></i>
+            <i class="far fa-heart mr-1"
+              :class="{
+                'text-red-500 fas': post.IsLiked,
+                'text-gary-500 far': !post.IsLiked
+              }"
+            ></i>
             <span>{{ post.Likes }}</span>
           </div>
           <div class="flex items-center">

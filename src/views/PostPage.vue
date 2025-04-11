@@ -6,7 +6,9 @@
       <!-- 作者信息 -->
       <div class="inline-block mb-2">
         <div class="flex items-center gap-2">
-          <div class="flex items-center p-3 pr-5 border-2 border-gray-800 rounded-lg h-14">
+          <div class="flex items-center p-3 pr-5 border-2 border-gray-800 rounded-lg h-14 cursor-pointer hover:bg-gray-100"
+               @click="navigateToProfile(AuthorID)"
+          >
             <img
                 :src="AuthorAvatar"
                 alt="作者头像"
@@ -112,7 +114,8 @@
               <img
                   :src="comment.AuthorAvatar"
                   alt="评论者头像"
-                  class="w-10 h-10 rounded-full object-cover"
+                  class="w-10 h-10 rounded-full object-cover cursor-pointer hover:scale-105 duration-300"
+                  @click="navigateToProfile(comment.AuthorID)"
               />
               <div class="ml-4 flex-1">
                 <div class="flex justify-between items-center mb-2">
@@ -179,6 +182,7 @@ import {CheckLevel, GetTextColor} from "@/utils/level";
 
 // 使用信息框
 import { useMessage } from '@/store/message'
+import router from "@/router";
 const { addMessage } = useMessage()
 
 // 用户信息缓存--------------------------------------------------------
@@ -239,6 +243,12 @@ onMounted(async () => {
   // 获取帖子信息
   const data = await get_post_detail({id: String(route.params.id)});
   console.log(data);
+  if (data.data.code != 20000) {
+    addMessage("查看帖子失败","error")
+    router.push("/diary");
+    return
+  }
+
   AuthorID.value = data.data.data.user_id;
   Title.value = data.data.data.title;
   Content.value = data.data.data.content;
@@ -282,6 +292,7 @@ onMounted(async () => {
 
 interface comment {
   ID : string;
+  AuthorID : string;
   AuthorName: string;
   AuthorAvatar: string;
   AuthorXp : number;
@@ -353,6 +364,7 @@ const LoadMoreComments = async (count : number) => {
         console.log(isLiked);
         Comments.value.push({
           ID : comment.id,
+          AuthorID: comment.user_id,
           AuthorName: Author.username,
           AuthorAvatar: Author.avatar,
           AuthorXp: Author.xp,
@@ -406,6 +418,11 @@ const ClickCommentLike = async (selectComment : comment) => {
     addMessage('点赞失败', 'error')
     return
   }
+};
+
+// 跳转到用户主页
+const navigateToProfile = (id : string) => {
+  router.push('/profile/'+id);
 };
 
 //测试，循环点赞
