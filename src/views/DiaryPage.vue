@@ -40,6 +40,24 @@
 
     <!-- 周记内容展示区 -->
     <div class="w-full max-w-3xl space-y-6">
+      <!-- 排序方式选择 -->
+      <div class="mb-6">
+        <div class="flex gap-3">
+          <button
+              v-for="tab in SortTabs"
+              :key="tab.id"
+              @click="SelectTab = tab.id"
+              :class="[
+              'px-4 py-2 rounded-xl font-medium cursor-pointer whitespace-nowrap border-2 border-gray-800',
+              SelectTab === tab.id ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 hover:bg-gray-100'
+            ]"
+          >
+            {{ tab.name }}
+          </button>
+        </div>
+      </div>
+
+
       <div
           v-for="(post, index) in displayedPosts"
           :key="index"
@@ -132,6 +150,14 @@ onMounted(() => {
 const currentWeekDisplay = computed(() => {
   return GetWeekCode(new Date(WeekDisplayTime.value)).name;
 });
+
+// 排序方式
+const SortTabs = [
+  { id: "popular", name: "推荐" },
+  { id: "new", name: "最新" },
+]
+const SelectTab = ref("popular");
+
 
 // 模拟获取周记数据
 const fetchWeeklyPosts = (weekDate: Date, page: number) => {

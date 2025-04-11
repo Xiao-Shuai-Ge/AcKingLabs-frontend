@@ -177,6 +177,10 @@ import {useUserStore} from "@/store/user";
 import {TimestampFormat} from "@/utils/week";
 import {CheckLevel, GetTextColor} from "@/utils/level";
 
+// 使用信息框
+import { useMessage } from '@/store/message'
+const { addMessage } = useMessage()
+
 let UserMap = new Map();
 
 // 用户信息缓存--------------------------------------------------------
@@ -196,8 +200,8 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
     data = resp.data.data
     data.level = CheckLevel(data.xp,data.role);
     UserMap.set(id, data)
+    console.log("缓存用户信息",data)
   }
-  //console.log(data)
   return data
 }
 //-------------------------------------------------------------------
@@ -246,8 +250,6 @@ onMounted(async () => {
   PublishTime.value = data.data.data.created_at;
   console.log(PublishTime.value)
   PublishDate.value = TimestampFormat(new Date(PublishTime.value));
-
-  IsFeatured.value = true
 
   // 获取作者信息
   const Author = await getUserInfo(AuthorID.value);
@@ -306,7 +308,7 @@ const Comments = ref<comment[]>([])
 const newComment = ref("");
 
 // 点赞帖子
-const ClickLike = () => {
+const ClickLike = async () => {
   // 先更新本地显示，不然看着别扭
   if (IsLiked.value) {
     IsLiked.value = false;
@@ -316,8 +318,13 @@ const ClickLike = () => {
     Likes.value++;
   }
   // 发送点赞请求
-  const data = like_post({post_id: String(route.params.id)});
-  //console.log(data)
+  const data = await like_post({post_id: String(route.params.id)});
+  console.log(data)
+  if (data.data.code != 20000) {
+    addMessage('点赞失败', 'error')
+    return
+  }
+  console.log(data)
 };
 
 const HasMoreComments = ref(true);
@@ -347,7 +354,7 @@ const LoadMoreComments = async (count : number) => {
           AuthorName: Author.username,
           AuthorAvatar: Author.avatar,
           AuthorXp: Author.xp,
-          AuthorLevel: AuthorLevel.value,
+          AuthorLevel: Author.level,
           PublishTime: comment.created_at,
           PublishDate: TimestampFormat(new Date(comment.created_at)),
           Content: comment.content,
@@ -370,9 +377,10 @@ const CreateComment = async () => {
     content: newComment.value,
   })
   if (data.data.code != 20000) {
-    // 错误
+    addMessage('发送失败', 'error')
     return
   }
+  newComment.value = "";
   // 刷新评论
   HasMoreComments.value = true;
   Comments.value=[];
@@ -392,6 +400,10 @@ const ClickCommentLike = async (selectComment : comment) => {
     selectComment.Likes++;
   }
   const data = await like_comment({comment_id: selectComment.ID});
+  if (data.data.code != 20000) {
+    addMessage('点赞失败', 'error')
+    return
+  }
 };
 
 //测试，循环点赞
@@ -399,6 +411,12 @@ const ClickCommentLike = async (selectComment : comment) => {
 //   const data = await like_comment({comment_id: "1910348998087020544"});
 //   console.log(data);
 // }, 100)
+
+// setInterval(async () => {
+//   const data = await like_post({post_id: "1910197948357021696"});
+//   console.log(data);
+// }, 100)
+
 
 </script>
 

@@ -169,6 +169,10 @@ import {getWeekday, GetWeekCode} from "@/utils/week";
 import {create_post} from "@/api/post";
 import router from "@/router";
 
+// 使用信息框
+import { useMessage } from '@/store/message'
+const { addMessage } = useMessage()
+
 // 帖子数据
 const postTitle = ref("");
 const postContent = ref("");
@@ -182,6 +186,8 @@ onMounted(()=>{
 
   postSource.value = GetWeekCode(date).name;
   postTitle.value = GetWeekCode(date).name+" 学习周记"
+
+  postContent.value = localStorage.getItem("draft-diary-content") || "";
 })
 
 // 新增的隐私选项
@@ -248,16 +254,20 @@ const publishPost = async () => {
   })
   console.log(data)
   if (data.data.code != 20000) {
-    alert("发布失败，请稍后再试！");
+    addMessage('发布失败', 'error')
   }
+  // 删除草稿内容
+  localStorage.removeItem("draft-diary-content");
   // 跳转
   await router.push("/diary/" + data.data.data.id)
 };
 
 // 保存草稿
 const saveDraft = () => {
-  alert("草稿已保存到本地！");
+  //alert("草稿已保存到本地！");
   // 这里可以添加实际的保存草稿逻辑
+  localStorage.setItem("draft-diary-content",postContent.value);
+  addMessage('草稿已保存到本地！', 'success')
 };
 </script>
 

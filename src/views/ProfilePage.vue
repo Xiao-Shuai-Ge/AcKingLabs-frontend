@@ -330,6 +330,10 @@ import {useRoute} from "vue-router";
 import {CheckLevel, GetTextColor, GetBgColor, NextLevelLimit} from "@/utils/level";
 import {useUserStore} from "@/store/user";
 
+// 使用信息框
+import { useMessage } from '@/store/message'
+const { addMessage } = useMessage()
+
 // 登录信息
 const UserStore = useUserStore();
 
@@ -355,6 +359,11 @@ const userInfo = ref({
 const route = useRoute()
 
 onMounted( async () => {
+  LoadUserInfo();
+})
+
+const LoadUserInfo = async () => {
+  addMessage('加载中...', 'info')
   const data = await get_user_profile({id: String(route.params.id)})
   console.log(data)
   // 头像
@@ -402,7 +411,9 @@ onMounted( async () => {
   }
 
   console.log("我的权限",UserStore.getUserInfo().role)
-})
+
+  addMessage('加载成功', 'success')
+}
 
 // 判断是否可以编辑
 const isCanEdit = computed(() => {
@@ -541,10 +552,16 @@ const saveUserInfo = async () => {
     student_no: editForm.value.studentId,
     codeforces_id: editForm.value.codeforcesId,
   })
+  if (data.data.code != 20000) {
+    addMessage('保存失败', 'error')
+    return;
+  }
+  addMessage('保存成功','success')
+
   console.log("修改用户请求:",data);
   // userInfo.value = { ...userInfo.value, ...editForm.value };
   // 刷新页面
-  location.reload();
+  await LoadUserInfo();
   closeEditModal();
 };
 
