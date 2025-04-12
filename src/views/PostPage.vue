@@ -24,6 +24,7 @@
 
           <button
               v-if="CanEdit"
+              @click="navigateToEditPage"
               class="flex items-center p-3 border-2 border-gray-800 rounded-lg h-14 bg-blue-500 text-white hover:bg-blue-400"
           >
             编辑
@@ -31,6 +32,7 @@
 
           <button
               v-if="CanSetFeatured"
+              @click="SetFeatured"
               class="flex items-center p-3 border-2 border-gray-800 rounded-lg h-14 bg-yellow-400 text-white hover:bg-yellow-300"
           >
             设为精华
@@ -172,7 +174,7 @@ import {
   get_like_post,
   get_more_comment,
   get_post_detail, like_comment,
-  like_post
+  like_post, set_featured
 } from "@/api/post";
 import {useRoute} from "vue-router";
 import {PostTypeToName} from "@/utils/post";
@@ -233,8 +235,29 @@ const IsPrivate = ref(false);
 
 const IsLiked = ref(false);
 
-const CanEdit = ref(false);
-const CanSetFeatured = ref(false);
+const CanEdit = computed(() => {
+  if (UserStore.getUserInfo().user_id == AuthorID.value || UserStore.getUserInfo().role >= 3) {
+    return true
+  }
+  return false
+});
+const CanSetFeatured = computed(() => {
+  if (UserStore.getUserInfo().role >= 3 && IsFeatured.value == false) {
+    return true;
+  }
+  return false
+});
+
+const SetFeatured = async () => {
+  const data = await set_featured({post_id: String(route.params.id)})
+  console.log(data)
+  if (data.data.code != 20000) {
+    addMessage("设置精华失败","error")
+    return
+  }
+  addMessage("设置精华成功","success")
+  IsFeatured.value = true;
+}
 
 const UserStore = useUserStore();
 const route = useRoute()
@@ -271,15 +294,6 @@ onMounted(async () => {
   AuthorXp.value = Author.xp;
   AuthorRole.value = Author.role;
   AuthorLevel.value = CheckLevel(AuthorXp.value,AuthorRole.value);
-
-  // 是否允许编辑
-  if (UserStore.getUserInfo().user_id == AuthorID.value) {
-    CanEdit.value = true;
-  }
-  // 是否允许设置精华
-  if (UserStore.getUserInfo().role >= 3) {
-    CanSetFeatured.value = true;
-  }
 
   // 点赞信息
   const like_resp = await get_like_post({post_id: String(route.params.id)});
@@ -424,6 +438,10 @@ const ClickCommentLike = async (selectComment : comment) => {
 const navigateToProfile = (id : string) => {
   router.push('/profile/'+id);
 };
+
+const navigateToEditPage = () => {
+  router.push("/diary/"+route.params.id+"/edit");
+}
 
 //测试，循环点赞
 // setInterval(async () => {

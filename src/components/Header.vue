@@ -152,6 +152,8 @@ onMounted(async () => {
       myID.value = data.data.data.id;
       userName.value = data.data.data.username;
       myRole.value = data.data.data.role;
+      myXp.value = data.data.data.xp;
+      myLevel.value = CheckLevel(myXp.value,myRole.value);
       if (data.data.data.avatar.length > 0) {
         userAvatarUrl.value = data.data.data.avatar;
       } else {

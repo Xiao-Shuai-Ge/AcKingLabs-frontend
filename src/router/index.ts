@@ -25,6 +25,11 @@ const routes = [
         component: () => import('../views/PostPage.vue')
     },
     {
+        path: '/diary/:id/edit',
+        name: 'DiaryEdit',
+        component: () => import('../views/PostEditPage.vue')
+    },
+    {
         path: '/diary/create',
         name: 'DiaryCreate',
         component: () => import('../views/DiaryCreatePage.vue')
