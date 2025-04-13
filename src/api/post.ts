@@ -31,6 +31,12 @@ export const get_post_detail = (data : {id: string}) => {
     })
 }
 
+export const get_post_detail_visitor = (data : {id: string}) => {
+    return http.get(`/api/post/detail-visitor`,{
+        params: data
+    })
+}
+
 export const get_like_post = (data : {post_id: string}) => {
     return http.get(`/api/post/like-post`,{
         params: data

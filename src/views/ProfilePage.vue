@@ -332,6 +332,7 @@ import {useUserStore} from "@/store/user";
 
 // 使用信息框
 import { useMessage } from '@/store/message'
+import router from "@/router";
 const { addMessage } = useMessage()
 
 // 登录信息
@@ -488,12 +489,12 @@ const closeEditModal = () => {
 const saveUserInfo = async () => {
   // 修改 role
   if (userInfo.value.role != editForm.value.role) {
-    const data2 = await set_role({id: editForm.value.userid, role: editForm.value.role});
+    const data2 = await set_role({id: String(route.params.id), role: editForm.value.role});
     console.log("修改权限请求:",data2);
   }
   // 修改用户信息
   const data = await set_profile({
-    id : editForm.value.userid,
+    id : String(route.params.id),
     username: editForm.value.username,
     avatar: editForm.value.avatarUrl,
     real_name: editForm.value.realName,
@@ -508,6 +509,15 @@ const saveUserInfo = async () => {
   addMessage('保存成功','success')
 
   console.log("修改用户请求:",data);
+  if (UserStore.getUserInfo().role == 0) {
+    // 权限更改，需要重新登录
+    UserStore.logout();
+    addMessage('身份发生变化，请重新登录','info')
+    setTimeout(() => {
+      router.push("/login");
+    },1000)
+  }
+
   // userInfo.value = { ...userInfo.value, ...editForm.value };
   // 刷新页面
   await LoadUserInfo();

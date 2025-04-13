@@ -170,7 +170,7 @@ import {create_post} from "@/api/post";
 import router from "@/router";
 
 // 使用信息框
-import { useMessage } from '@/store/message'
+import {CodeHandler, useMessage} from '@/store/message'
 const { addMessage } = useMessage()
 
 // 帖子数据
@@ -182,7 +182,8 @@ const showTypeDropdown = ref(false);
 
 onMounted(()=>{
   // 自动识别当前是第几周
-  let date = new Date(1744541827000);
+  let date = new Date();
+  //date = new Date(1743914958000);
 
   postSource.value = GetWeekCode(date).name;
   postTitle.value = GetWeekCode(date).name+" 学习周记"
@@ -253,13 +254,15 @@ const publishPost = async () => {
     is_private: isPrivate.value,
   })
   console.log(data)
-  if (data.data.code == -20008) {
-    addMessage('请先实名认证!', 'error')
-    return
-  } else if (data.data.code != 20000) {
-    addMessage('发布失败', 'error')
+  if (CodeHandler(data.data.code,[
+      [20000, "发布成功","success"],
+      [10012, "你已发布过本周周记!","error"],
+      [-20008, "请先实名认证!","error"],
+      [0, "发布失败","error"]]))
+  {
     return
   }
+
   // 删除草稿内容
   localStorage.removeItem("draft-diary-content");
   // 跳转

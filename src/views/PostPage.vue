@@ -64,6 +64,7 @@
         <div class="px-6 pb-6 flex items-center">
           <button
               @click="ClickLike"
+              :disabled="LikedDisabled"
               class="flex items-center cursor-pointer !rounded-button whitespace-nowrap"
               :class="{ 'text-red-500': IsLiked, 'text-gray-500': !IsLiked }"
           >
@@ -133,6 +134,7 @@
 <!--                <p class="text-gray-800 mb-3">{{ comment.Content }}</p>-->
                 <button
                     @click="ClickCommentLike(comment)"
+                    :disabled="comment.LikedDisabled"
                     class="flex items-center text-sm cursor-pointer !rounded-button whitespace-nowrap"
                     :class="{ 'text-red-500': comment.IsLiked, 'text-gray-500': !comment.IsLiked }"
                 >
@@ -173,7 +175,7 @@ import {
   get_like_comment,
   get_like_post,
   get_more_comment,
-  get_post_detail, like_comment,
+  get_post_detail, get_post_detail_visitor, like_comment,
   like_post, set_featured
 } from "@/api/post";
 import {useRoute} from "vue-router";
@@ -234,6 +236,7 @@ const IsFeatured = ref(false);
 const IsPrivate = ref(false);
 
 const IsLiked = ref(false);
+const LikedDisabled = ref(false);
 
 const CanEdit = computed(() => {
   if (UserStore.getUserInfo().user_id == AuthorID.value || UserStore.getUserInfo().role >= 3) {
@@ -264,11 +267,16 @@ const route = useRoute()
 
 onMounted(async () => {
   // 获取帖子信息
-  const data = await get_post_detail({id: String(route.params.id)});
+  let data;
+  if (UserStore.isLogin()) {
+    data = await get_post_detail({id: String(route.params.id)});
+  } else {
+    data = await get_post_detail_visitor({id: String(route.params.id)});
+  }
   console.log(data);
   if (data.data.code != 20000) {
     addMessage("查看帖子失败","error")
-    router.push("/diary");
+    await router.push("/diary");
     return
   }
 
@@ -319,6 +327,7 @@ interface comment {
   Likes: number;
 
   IsLiked: boolean;
+  LikedDisabled : boolean;
 }
 
 const CommentDisabled = computed(() => {
@@ -336,20 +345,23 @@ const newComment = ref("");
 
 // 点赞帖子
 const ClickLike = async () => {
-  // 先更新本地显示，不然看着别扭
-  if (IsLiked.value) {
-    IsLiked.value = false;
-    Likes.value--;
-  } else {
-    IsLiked.value = true;
-    Likes.value++;
-  }
+  LikedDisabled.value = true;
+  setTimeout(() => {
+    LikedDisabled.value = false;
+  },300)
   // 发送点赞请求
   const data = await like_post({post_id: String(route.params.id)});
   console.log(data)
   if (data.data.code != 20000) {
     addMessage('点赞失败', 'error')
     return
+  }
+  if (IsLiked.value) {
+    IsLiked.value = false;
+    Likes.value--;
+  } else {
+    IsLiked.value = true;
+    Likes.value++;
   }
   console.log(data)
 };
@@ -388,6 +400,7 @@ const LoadMoreComments = async (count : number) => {
           Content: comment.content,
           Likes: comment.likes,
           IsLiked: isLiked.data.data.is_like,
+          LikedDisabled: false,
         });
         BeforeID.value = comment.id
       }
@@ -419,18 +432,21 @@ const CreateComment = async () => {
 
 // 点赞评论
 const ClickCommentLike = async (selectComment : comment) => {
-  // 先更新本地显示，不然看着别扭
+  selectComment.LikedDisabled = true;
+  setTimeout(() => {
+    selectComment.LikedDisabled = false;
+  },300)
+  const data = await like_comment({comment_id: selectComment.ID});
+  if (data.data.code != 20000) {
+    addMessage('点赞失败', 'error')
+    return
+  }
   if (selectComment.IsLiked) {
     selectComment.IsLiked = false;
     selectComment.Likes--;
   } else {
     selectComment.IsLiked = true;
     selectComment.Likes++;
-  }
-  const data = await like_comment({comment_id: selectComment.ID});
-  if (data.data.code != 20000) {
-    addMessage('点赞失败', 'error')
-    return
   }
 };
 
@@ -472,8 +488,4 @@ textarea {
   margin-right: 0.25rem;
 }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 </style>
