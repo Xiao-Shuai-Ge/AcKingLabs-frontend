@@ -184,7 +184,7 @@
           </button>
         </div>
 
-        <form @submit.prevent="saveUserInfo">
+        <form>
           <div class="mb-6 flex flex-col items-center">
             <div
                 class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-800 mb-2 relative group"
@@ -212,9 +212,23 @@
               <input
                   v-model="editForm.avatarUrl"
                   type="text"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
-                  maxlength="100"
+                  class="w-2/3 px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
+                  maxlength="255"
               />
+              <button
+                  type="button"
+                  @click="triggerFileUpload"
+                  class="float-right w-3/7 px-3 py-3 bg-gray-800 text-white text-sm rounded-md focus:outline-none"
+              >
+                上传本地图片
+              </button>
+              <input
+                  type="file"
+                  ref="fileInput"
+                  class="hidden"
+                  accept="image/*"
+                  @change="handleFileUpload"
+              >
             </div>
 
             <div>
@@ -312,6 +326,7 @@
                 class="px-4 py-2 text-white rounded-md  cursor-pointer whitespace-nowrap !rounded-button"
                 :disabled = "DisabledSaveButton"
                 :class = "{'bg-gray-300':DisabledSaveButton, 'bg-gray-800 hover:bg-gray-700':!DisabledSaveButton}"
+                @click = "saveUserInfo"
             >
               保存
             </button>
@@ -333,6 +348,7 @@ import {useUserStore} from "@/store/user";
 // 使用信息框
 import { useMessage } from '@/store/message'
 import router from "@/router";
+import {upload_image} from "@/api/file";
 const { addMessage } = useMessage()
 
 // 登录信息
@@ -471,9 +487,6 @@ const editForm = ref({
   role: 0,
 });
 
-// 年级选项
-const grades = ["大一", "大二", "大三", "大四", "研一", "研二", "研三", "博士"];
-
 // 打开编辑弹窗
 const openEditModal = () => {
   editForm.value = { ...userInfo.value };
@@ -584,6 +597,52 @@ const getRatingColorClass = () => {
   if (rating < 3000) return "text-red-600"; // Grandmaster
   return "text-red-700"; // International Grandmaster
 };
+
+// 在setup部分添加：
+const fileInput = ref<HTMLInputElement | null>(null);
+
+// 触发文件选择
+const triggerFileUpload = () => {
+  fileInput.value?.click();
+};
+
+// 处理文件上传
+const handleFileUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+
+  if (!file) return;
+
+  // 验证文件类型和大小（限制5MB）
+  if (!file.type.startsWith('image/')) {
+    addMessage('只能上传图片文件', 'error');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    addMessage('文件大小不能超过5MB', 'error');
+    return;
+  }
+
+  try {
+    addMessage('上传中...', 'info');
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await upload_image(formData);
+
+    if (response.data.code === 20000) {
+      editForm.value.avatarUrl = response.data.data.url;
+      addMessage('上传成功', 'success');
+    }
+  } catch (error) {
+    addMessage('上传失败，请稍后重试', 'error');
+    console.error('Upload error:', error);
+  } finally {
+    // 清空input值以允许重复上传同一文件
+    if (fileInput.value) fileInput.value.value = '';
+  }
+};
+
 </script>
 
 <style scoped>

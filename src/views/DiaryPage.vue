@@ -5,11 +5,13 @@
     <!-- 头部发布按钮 -->
     <div class="mb-12 mt-10">
       <button
-          class="w-32 h-32 rounded-full bg-black text-white border-2 border-black flex items-center justify-center shadow-lg hover:bg-gray-800 transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap hover:scale-105"
-          @click="navigateToPublish"
+          class="w-32 h-32 rounded-full text-white flex items-center justify-center shadow-lg  transition-all duration-300 cursor-pointer !rounded-button whitespace-nowrap hover:scale-105"
+          :class="ButtonClass"
+          @click="ClickButtion"
+
       >
-        <i class="fas fa-plus text-xl"></i>
-        <span class="ml-2">发布周记</span>
+        <i :class="ButtonIcon"></i>
+        <span class="ml-2">{{ ButtonText }}</span>
       </button>
     </div>
 
@@ -133,10 +135,11 @@ import { ref, computed, onMounted } from "vue";
 import Header from "@/components/Header.vue";
 import {GetStudyTimeString, GetValidSubmissionTime, GetWeekCode, GetWeekday, TimestampFormat} from "@/utils/week";
 import router from "@/router";
-import {get_like_post, get_more_post} from "@/api/post";
+import {get_diary_list, get_like_post, get_more_post} from "@/api/post";
 import {CheckLevel , GetTextColor} from "@/utils/level";
 import {get_user_info} from "@/api/user";
 import {PostTypeToName} from "@/utils/post";
+import {useUserStore} from "@/store/user";
 
 // 用户信息缓存--------------------------------------------------------
 let UserMap = new Map();
@@ -163,20 +166,33 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
 }
 //-------------------------------------------------------------------
 
+const UserStore = useUserStore()
+
 const WeekDisplayTime = ref(0);
 
-onMounted(() => {
+const DiaryMap = new Map();
+
+onMounted(async () => {
   // 将WeekDisplayTime时间调到这周周一,无论是周一几点都在周记提交时间范围内
   const date = new Date()
   WeekDisplayTime.value = date.getTime();
   const week = GetWeekday(date);
-  if (week <= 2) {
+  if (week <= 2 && date.getHours() < 12) {
     // 往回退
     WeekDisplayTime.value -= (week-1) * 24 * 60 * 60 * 1000;
   } else {
     // 往前推
     WeekDisplayTime.value += (8-week) * 24 * 60 * 60 * 1000;
   }
+  // 获得个人周记列表
+  const user_id = (await UserStore.getUserInfoForced()).user_id
+  //console.log("用户id",user_id)
+  const data2 = await get_diary_list({user_id:user_id})
+  for (const diary of data2.data.data.posts) {
+    DiaryMap.set(diary.source, diary.post_id)
+  }
+  // 刷新按钮
+  RefreshButton()
 })
 
 // 计算当前周显示
@@ -190,6 +206,54 @@ const SortTabs = [
   { id: "new", name: "最新" },
 ]
 const SelectedTab = ref("popular");
+
+const ButtonText = ref("发布周记");
+const ButtonIcon = ref("fas fa-plus text-xl")
+const ButtonClass = ref("bg-black hover:bg-gray-800")
+
+const RefreshButton = () => {
+  const data = GetValidSubmissionTime(new Date(WeekDisplayTime.value));
+  const date = new Date();
+  const weekcode = GetWeekCode(new Date(WeekDisplayTime.value)).code;
+  if (date < data.from) {
+    ButtonText.value = "未到时间";
+    ButtonIcon.value = "far fa-clock text-xl";
+    ButtonClass.value = "bg-gray-500 hover:bg-gray-400";
+  } else if (date > data.to) {
+    if (DiaryMap.has(weekcode)) {
+      ButtonText.value = "已提交";
+      ButtonIcon.value = "fa-solid fa-check text-xl";
+      ButtonClass.value = "bg-green-500 hover:bg-green-400";
+    } else {
+      ButtonText.value = "未提交";
+      ButtonIcon.value = "fa-solid fa-xmark text-xl";
+      ButtonClass.value = "bg-red-500 hover:bg-red-400";
+    }
+  } else {
+    if (DiaryMap.has(weekcode)) {
+      ButtonText.value = "已提交";
+      ButtonIcon.value = "fa-solid fa-check text-xl";
+      ButtonClass.value = "bg-green-500 hover:bg-green-400";
+    } else {
+      ButtonText.value = "发布周记";
+      ButtonIcon.value = "fas fa-plus text-xl";
+      ButtonClass.value = "bg-black hover:bg-gray-800";
+    }
+  }
+}
+
+// 跳转到发布页面
+const ClickButtion = () => {
+  const data = GetValidSubmissionTime(new Date(WeekDisplayTime.value));
+  const date = new Date();
+  const weekcode = GetWeekCode(new Date(WeekDisplayTime.value)).code;
+  // 已提交，可以查看
+  if (DiaryMap.has(weekcode)) {
+    router.push(`/diary/`+DiaryMap.get(weekcode));
+  } else if (date >= data.from && date <= data.to) {
+    router.push('/diary/create');
+  }
+};
 
 const RefreshPostList = () => {
   BeforeID.value = "9223372036854775807"
@@ -228,16 +292,16 @@ const LoadMorePosts = async (count:number) => {
     by : SelectedTab.value,
     count : count
   })
-  console.log(data)
+  //console.log(data)
   if (data.data.data.length > 0) {
     // 循环加入帖子列表
     for (const post of data.data.data.posts) {
-      console.log(post);
+      //console.log(post);
       if (!PostMAP.has(post.id)) {
         PostMAP.set(post.id, true);
         const Author = await getUserInfo(post.user_id);
         const isLiked = await get_like_post({post_id: post.id});
-        console.log(isLiked);
+        //console.log(isLiked);
         Posts.value.push({
           ID : post.id,
           AuthorID : post.user_id,
@@ -279,18 +343,15 @@ const LoadMorePosts = async (count:number) => {
 // 切换周次
 const prevWeek = () => {
   WeekDisplayTime.value -= 7 * 24 * 60 * 60 * 1000;
+  RefreshButton()
   RefreshPostList()
 }
 
 const nextWeek = () => {
   WeekDisplayTime.value += 7 * 24 * 60 * 60 * 1000;
+  RefreshButton()
   RefreshPostList()
 }
-
-// 跳转到发布页面
-const navigateToPublish = () => {
-  router.push('/diary/create');
-};
 
 // 跳转到帖子详情页面
 const navigateToPost = (id : string) => {

@@ -13,11 +13,13 @@
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@kangc/v-md-editor": "^2.3.18",
     "axios": "^1.8.4",
+    "device-detector-js": "^3.0.3",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.21",
     "pinia": "^3.0.1",
     "typescript": "^5.8.3",
     "vue": "^3.5.13",
+    "vue-device-detect": "^1.0.3",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {

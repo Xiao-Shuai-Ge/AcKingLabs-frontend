@@ -3,9 +3,11 @@
   <div class="min-h-screen bg-white text-gray-900 flex flex-col">
     <Header/>
 
-    <main class="flex-grow flex px-6 py-6 mt-12 gap-6 max-w-7xl mx-auto w-full">
+    <main class="flex-grow flex flex-col md:flex-row px-6 py-6 mt-12 gap-6 max-w-7xl mx-auto w-full">
       <!-- 左侧编辑区 -->
-      <div class="w-7/12 flex flex-col gap-2">
+      <div class="flex flex-col gap-2"
+           :class = "[isMobile? 'w-full' : 'w-7/12']"
+      >
         <div class="flex flex-col gap-2">
           <label for="title" class="text-sm font-medium text-gray-700"
           >标题</label
@@ -106,6 +108,8 @@
             <v-md-editor
                 v-model="postContent"
                 mode="edit"
+                disabled-menus = ""
+                @upload-image="handleUploadImage"
                 left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code"
                 right-toolbar="toc"
                 height="400px"
@@ -137,7 +141,9 @@
       </div>
 
       <!-- 右侧预览区 -->
-      <div class="w-5/12 flex flex-col">
+      <div class="flex flex-col"
+           :class = "[isMobile? 'w-full' : 'w-5/12']"
+      >
         <div
             class="border border-gray-200 rounded-lg shadow-sm bg-gray-50 p-6 h-[80vh] overflow-auto"
         >
@@ -169,9 +175,20 @@ import {getWeekday, GetWeekCode} from "@/utils/week";
 import {create_post} from "@/api/post";
 import router from "@/router";
 
+// 使用图片上传
+import {handleUploadImage} from '@/utils/file'
+
 // 使用信息框
 import {CodeHandler, useMessage} from '@/store/message'
 const { addMessage } = useMessage()
+
+// 判断是否是移动端
+const isMobile = ref(false);
+onMounted(() => {
+  const ua = navigator.userAgent.toLowerCase();
+  isMobile.value = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+  console.log(isMobile.value);
+});
 
 // 帖子数据
 const postTitle = ref("");

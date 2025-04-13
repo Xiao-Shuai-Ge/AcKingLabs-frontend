@@ -89,3 +89,10 @@ export const get_more_post = (data : {
 export const set_featured = (data : {post_id: string}) => {
     return http.post('/api/post/feature',data)
 }
+
+export const get_diary_list = (data : {user_id: string}) => {
+    console.log(data)
+    return http.get(`/api/post/diary-list`,{
+        params: data
+    })
+}

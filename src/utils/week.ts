@@ -43,7 +43,7 @@ export const GetWeekCode = (date: Date) => {
 
 export const GetValidSubmissionTime = (date: Date) => {
     const data = GetWeekCode(date);
-    const timestamp = data.date.getTime();
+    const timestamp = data.date.getTime() + 7*24*3600*1000;
     const from = new Date(timestamp-24*3600*1000);
     const to = new Date(timestamp+24*3600*1000);
     return {
@@ -57,7 +57,7 @@ export const GetValidSubmissionTime = (date: Date) => {
 
 export const GetStudyTimeString = (date: Date) => {
     const data = GetWeekCode(date);
-    const timestamp = data.date.getTime();
+    const timestamp = data.date.getTime() + 7*24*3600*1000;
     const from = new Date(timestamp-12*3600*1000-7*24*3600*1000);
     const to = new Date(timestamp-12*3600*1000);
     return {

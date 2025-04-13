@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import {my_info} from "@/api/user";
 
 export interface User {
   user_id: string;
@@ -32,6 +33,18 @@ export const useUserStore = defineStore("user", {
         role: this.currentUser.role,
         xp : this.currentUser.xp
       }
+    },
+    async getUserInfoForced() {
+      const data = await my_info();
+      console.log(data);
+      this.setUserInfo({
+        user_id: data.data.data.id,
+        username: data.data.data.username,
+        avatar: data.data.data.avatar,
+        role: data.data.data.role,
+        xp : data.data.data.xp
+      })
+      return this.getUserInfo()
     },
     setUserInfo(data: { user_id: string, username: string, avatar: string , role: number , xp: number }) {
       // 如果有token本地信息，更新

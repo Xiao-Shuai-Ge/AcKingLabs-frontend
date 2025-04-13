@@ -89,6 +89,8 @@
             <v-md-editor
                 v-model="newComment"
                 height="200px"
+                disabled-menus = ""
+                @upload-image="handleUploadImage"
                 left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code"
             />
           </div>
@@ -185,9 +187,13 @@ import {TimestampFormat} from "@/utils/week";
 import {CheckLevel, GetTextColor} from "@/utils/level";
 
 // 使用信息框
-import { useMessage } from '@/store/message'
+import {CodeHandler, useMessage} from '@/store/message'
 import router from "@/router";
+import {upload_image} from "@/api/file";
 const { addMessage } = useMessage()
+
+// 使用图片上传
+import {handleUploadImage} from '@/utils/file'
 
 // 用户信息缓存--------------------------------------------------------
 let UserMap = new Map();
@@ -449,6 +455,8 @@ const ClickCommentLike = async (selectComment : comment) => {
     selectComment.Likes++;
   }
 };
+
+
 
 // 跳转到用户主页
 const navigateToProfile = (id : string) => {

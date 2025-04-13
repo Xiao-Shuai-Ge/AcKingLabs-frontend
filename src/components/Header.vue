@@ -8,13 +8,13 @@
       <div class="flex items-center ml-5"
            @click="navigateTo('/')"
       >
-        <img class="h-10 w-auto" src="/assets/AcKing_black.png" alt="公司Logo" />
-        <span class="ml-2 text-xl font-semibold">AcKing 学习分享平台</span>
+        <img class="h-10 w-auto mr-2" src="/assets/AcKing_black.png" alt="公司Logo" />
+        <span class="font-semibold" v-if="!isMobile">AcKing 学习分享平台</span>
       </div>
 
       <!-- 功能导航 -->
       <div
-          class="flex items-center justify-center overflow-x-auto hide-scrollbar h-full flex-1 mr-32"
+          class="flex items-center justify-center overflow-x-auto hide-scrollbar h-full flex-1"
       >
         <div class="flex h-full">
           <div
@@ -22,13 +22,15 @@
               :key="index"
               @click="navigateTo(item.path)"
               :class="[
-              'px-3 py-1.5 w-32 transition-all duration-200 cursor-pointer whitespace-nowrap !rounded-button text-center text-xl pt-3',
+              'px-3 py-1.5 transition-all duration-200 cursor-pointer whitespace-nowrap !rounded-button text-center pt-3',
+              isMobile ? 'w-12 text-sm' : 'w-32 text-xl',
+
               $route.path.startsWith(item.path) ? 'bg-black text-white border-b-4' : 'text-gray-800 hover:bg-gray-100 border-l-2 border-r-1',
               $route.path.startsWith(item.path) ? item.color:'border-gray-100'
             ]"
           >
-            <span class="relative z-10">{{ item.name }}</span>
-            <i class="ml-2" :class="item.icon"></i>
+            <span class="relative z-10 mr-2" v-if="!isMobile">{{ item.name }}</span>
+            <i :class="item.icon"></i>
           </div>
         </div>
       </div>
@@ -80,6 +82,15 @@ import router from "@/router";
 import {my_info} from "@/api/user";
 import {useUserStore} from "@/store/user";
 import {CheckLevel, GetTextColor} from "@/utils/level";
+
+// 判断是否是移动端
+const isMobile = ref(false);
+onMounted(() => {
+  const ua = navigator.userAgent.toLowerCase();
+  isMobile.value = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+  console.log(isMobile.value);
+});
+
 
 // 导航项
 const navItems = ref([
