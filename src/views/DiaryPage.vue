@@ -177,7 +177,7 @@ onMounted(async () => {
   const date = new Date()
   WeekDisplayTime.value = date.getTime();
   const week = GetWeekday(date);
-  if (week <= 2 && date.getHours() < 12) {
+  if (week == 1 || (week == 2 && date.getHours() < 12)) {
     // 往回退
     WeekDisplayTime.value -= (week-1) * 24 * 60 * 60 * 1000;
   } else {
