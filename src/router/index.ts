@@ -48,6 +48,11 @@ const routes = [
         path: '/profile/:id',
         name: 'Profile',
         component: () => import('../views/ProfilePage.vue')
+    },
+    {
+        path: '/more/ulearning',
+        name: 'Ulearning',
+        component: () => import('../views/Ulearning.vue')
     }
 ]
 
