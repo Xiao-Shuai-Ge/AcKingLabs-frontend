@@ -284,7 +284,11 @@ const HasMorePosts = ref(true);
 const PostMAP = new Map<string,boolean>();
 
 // 加载更多周记
+const LoadTime = ref(0);
 const LoadMorePosts = async (count:number) => {
+  LoadTime.value = new Date().getTime();
+  const NowLoadTime = LoadTime.value;
+
   const data = await get_more_post({
     type: "diary",
     source: GetWeekCode(new Date(WeekDisplayTime.value)).code,
@@ -301,6 +305,10 @@ const LoadMorePosts = async (count:number) => {
         PostMAP.set(post.id, true);
         const Author = await getUserInfo(post.user_id);
         const isLiked = await get_like_post({post_id: post.id});
+        if (LoadTime.value != NowLoadTime) {
+          // 不再加载此次数据，退出循环
+          break;
+        }
         //console.log(isLiked);
         Posts.value.push({
           ID : post.id,

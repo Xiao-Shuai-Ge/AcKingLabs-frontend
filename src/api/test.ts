@@ -15,3 +15,10 @@ export const signin = (data : {
 }) => {
     return http.post('/api/common/signin',data)
 }
+
+export const signin_teacher = (data : {
+    user_id: number,
+    relation_id: number
+}) => {
+    return http.post('/api/common/signin-teacher',data)
+}

@@ -11,6 +11,10 @@
           :class="active.colorClass"
       >
         {{ active.className }} : {{ active.activeName }}
+        <span class="ml-auto text-sm" v-if="active.teacherMode">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          警告: 签到已结束，再次点击使用补签，请谨慎操作
+        </span>
       </div>
     </div>
   </div>
@@ -20,7 +24,7 @@
 <script setup lang="ts">
 import Header from "@/components/Header.vue";
 import {onMounted, ref} from "vue";
-import {signin_list,signin} from "@/api/test";
+import {signin_list, signin, signin_teacher} from "@/api/test";
 import router from "@/router";
 
 // 使用信息框
@@ -36,6 +40,7 @@ interface Active {
   relationID: number;
   disabled: boolean;
   colorClass: string;
+  teacherMode : boolean;
 }
 
 const actives = ref<Active[]>([]);
@@ -61,7 +66,8 @@ onMounted(async () => {
       classID: active.class_id,
       relationID: active.relation_id,
       disabled: false,
-      colorClass: "bg-white"
+      colorClass: "bg-white",
+      teacherMode: false,
     });
   }
 })
@@ -74,19 +80,29 @@ const Signin = async (active : Active) => {
   addMessage("签到中...","info")
   active.disabled = true
   active.colorClass = "bg-yellow-300"
-  const data = await signin({
+  let data;
+  if (active.teacherMode) {
+    data = await signin_teacher({
+      relation_id: active.relationID,
+      user_id: active.userID,
+    })
+  } else {
+    data = await signin({
       relation_id: active.relationID,
       user_id: active.userID,
       class_id: active.classID,
-  })
+    })
+  }
   console.log("签到结果",data)
   if (data.data.code != 20000) {
     addMessage("签到失败!","error")
     active.colorClass = "bg-red-300"
     active.disabled = false
+    active.teacherMode = true
     return
   }
   addMessage("签到成功!","success")
+  active.teacherMode = false
   active.colorClass = "bg-green-300"
 }
 

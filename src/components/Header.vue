@@ -59,7 +59,7 @@
         <!-- 下拉菜单 -->
         <div
             v-show="showDropdown && userName"
-            class="absolute right-0 top-full mt-1 w-36 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-200 z-10"
+            class="absolute right-0 top-full mt-1 w-40 bg-white shadow-lg rounded-md overflow-hidden transition-all duration-200 z-10"
         >
           <div
               v-for="(option, index) in dropdownOptions"
@@ -69,6 +69,11 @@
           >
             <i :class="['mr-2', option.icon]"></i>
             {{ option.label }}
+            <span v-if="option.label === '消息通知' && MessageCount > 0"
+              class="text-sm text-white bg-red-500 rounded-full mr-1 px-1 w-4 h-4 items-center justify-center"
+            >
+              {{ MessageCount }}
+            </span>
           </div>
         </div>
       </div>
@@ -91,6 +96,7 @@ onMounted(() => {
   console.log(isMobile.value);
 });
 
+const MessageCount = ref(0);
 
 // 导航项
 const navItems = ref([
@@ -101,6 +107,7 @@ const navItems = ref([
 // 下拉菜单选项
 const dropdownOptions = ref([
   { label: "个人主页", icon: "fas fa-user" , click: () => navigateToProfile() },
+  { label: "消息通知", icon: "fas fa-bell" , click: () => navigateTo("/message") },
   { label: "退出登录", icon: "fas fa-sign-out-alt" , click: () => logout() },
 ]);
 
