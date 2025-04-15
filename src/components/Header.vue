@@ -52,6 +52,13 @@
                 class="w-full h-full object-cover object-top"
                 @click="navigateTo('/login')"
             />
+            <!-- 消息提示红点 -->
+            <span
+                v-if="MessageCount > 0"
+                class="absolute  -bottom-1 right-1 bg-red-500 text-white rounded-full text-xs min-w-[18px] h-[18px] flex items-center justify-center px-1"
+            >
+              {{ MessageCount > 99 ? '99+' : MessageCount }}
+            </span>
           </div>
 <!--          <i class="fas fa-chevron-down text-xs ml-2 text-gray-500"></i>-->
         </div>
@@ -70,7 +77,7 @@
             <i :class="['mr-2', option.icon]"></i>
             {{ option.label }}
             <span v-if="option.label === '消息通知' && MessageCount > 0"
-              class="text-sm text-white bg-red-500 rounded-full mr-1 px-1 w-4 h-4 items-center justify-center"
+              class="text-sm text-white bg-red-500 rounded-full ml-1 px-1 w-4 h-4 items-center justify-center"
             >
               {{ MessageCount }}
             </span>
@@ -87,6 +94,7 @@ import router from "@/router";
 import {my_info} from "@/api/user";
 import {useUserStore} from "@/store/user";
 import {CheckLevel, GetTextColor} from "@/utils/level";
+import {get_message_count} from "@/api/message";
 
 // 判断是否是移动端
 const isMobile = ref(false);
@@ -187,6 +195,7 @@ onMounted(async () => {
       role : myRole.value,
       xp : myXp.value,
     });
+    await GetMessageCount();
   } else {
     console.log("用户未登录");
     userName.value = ""
@@ -194,6 +203,14 @@ onMounted(async () => {
   }
 })
 
+const GetMessageCount = async () => {
+  const data = await get_message_count();
+  if (data.data.code != 20000) {
+    console.error("获取消息通知失败");
+    return;
+  }
+  MessageCount.value = data.data.data.count;
+}
 // onMounted( async () => {
 //   // 先从本地存储中获取用户名和头像
 //   const username = localStorage.getItem('username')
@@ -250,6 +267,10 @@ const openDropdown = () => {
 </script>
 
 <style scoped>
+.relative {
+  position: relative;
+}
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }

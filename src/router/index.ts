@@ -50,6 +50,11 @@ const routes = [
         component: () => import('../views/ProfilePage.vue')
     },
     {
+        path: '/message',
+        name: 'Message',
+        component: () => import('../views/MessagePage.vue')
+    },
+    {
         path: '/more/ulearning',
         name: 'Ulearning',
         component: () => import('../views/Ulearning.vue')
