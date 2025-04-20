@@ -100,9 +100,9 @@
             <span
                 class="float-right"
                 :class="{
-                  'text-red-500': postContent.length === 0 || postContent.length > 5000,
+                  'text-red-500': postContent.length === 0 || postContent.length > 20000,
                 }"
-            >{{ postContent.length }}  / 5000</span>
+            >{{ postContent.length }}  / 20000</span>
           </label>
           <div class="shadow-white">
             <v-md-editor
