@@ -132,8 +132,10 @@
 
         <!-- 评论列表 -->
         <div>
-          <div v-for="(comment, index) in Comments" :key="index" class="p-6 border-2 border-gray-300 mt-2 rounded-md">
-            <div class="flex items-start">
+          <div v-for="(comment, index) in Comments" :key="index">
+            <div class="p-6 border-2 border-gray-500 mt-2 rounded-md flex items-start"
+                 :class="{'rounded-b-none': comment.ChildComments.length != 0}"
+            >
               <img
                   :src="comment.AuthorAvatar"
                   alt="评论者头像"
@@ -175,6 +177,44 @@
                 </div>
               </div>
             </div>
+            <div v-for="(childComment, index) in comment.ChildComments" :key="index" class="ml-10 p-3 border-b-2 border-x-2 border-gray-500">
+              <div class="flex items-start">
+                <img
+                    :src="childComment.AuthorAvatar"
+                    alt="评论者头像"
+                    class="w-6 h-6 rounded-full object-cover cursor-pointer hover:scale-105 duration-300"
+                    @click="navigateToProfile(childComment.AuthorID)"
+                />
+                <div class="ml-2 flex-1">
+                  <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-bold text-sm" :class="GetTextColor(childComment.AuthorLevel)">{{ childComment.AuthorName }}</h4>
+                    <span class="text-gray-500 text-xs"
+                    >{{ childComment.PublishDate }}</span
+                    >
+                  </div>
+                  <div class="-m-8 -mt-4 -mb-10">
+                    <v-md-preview :text="childComment.Content"></v-md-preview>
+                  </div>
+
+                  <!--                <p class="text-gray-800 mb-3">{{ comment.Content }}</p>-->
+                  <div class="flex items-center">
+                    <button
+                        @click="ClickCommentLike(childComment)"
+                        :disabled="childComment.LikedDisabled"
+                        class="flex items-center text-sm cursor-pointer !rounded-button whitespace-nowrap"
+                        :class="{ 'text-red-500': childComment.IsLiked, 'text-gray-500': !childComment.IsLiked }"
+                    >
+                      <i
+                          class="fa-heart"
+                          :class="childComment.IsLiked ? 'fas' : 'far'"
+                      ></i>
+                      <span class="ml-1">{{ childComment.Likes }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -286,7 +326,7 @@ const CanSetFeatured = computed(() => {
 
 const SetFeatured = async () => {
   const data = await set_featured({post_id: String(route.params.id)})
-  console.log(data)
+  //console.log(data)
   if (data.data.code != 20000) {
     addMessage("设置精华失败","error")
     return
@@ -306,7 +346,7 @@ onMounted(async () => {
   } else {
     data = await get_post_detail_visitor({id: String(route.params.id)});
   }
-  console.log(data);
+  //console.log(data);
   if (data.data.code != 20000) {
     addMessage("查看帖子失败","error")
     await router.push("/diary");
@@ -324,12 +364,12 @@ onMounted(async () => {
   Type.value = data.data.data.type;
   TypeName.value = PostTypeToName(Type.value);
   PublishTime.value = data.data.data.created_at;
-  console.log(PublishTime.value)
+  //console.log(PublishTime.value)
   PublishDate.value = TimestampFormat(new Date(PublishTime.value));
 
   // 获取作者信息
   const Author = await getUserInfo(AuthorID.value);
-  console.log(Author);
+  //console.log(Author);
   AuthorName.value = Author.username;
   AuthorAvatar.value = Author.avatar;
   AuthorXp.value = Author.xp;
@@ -338,7 +378,7 @@ onMounted(async () => {
 
   // 点赞信息
   const like_resp = await get_like_post({post_id: String(route.params.id)});
-  console.log(like_resp);
+  //console.log(like_resp);
   IsLiked.value = like_resp.data.data.is_like;
 
   // 刷新评论
@@ -404,7 +444,7 @@ const ClickLike = async () => {
   },300)
   // 发送点赞请求
   const data = await like_post({post_id: String(route.params.id)});
-  console.log(data)
+  //console.log(data)
   if (data.data.code != 20000) {
     addMessage('点赞失败', 'error')
     return
@@ -416,7 +456,7 @@ const ClickLike = async () => {
     IsLiked.value = true;
     Likes.value++;
   }
-  console.log(data)
+  //console.log(data)
 };
 
 const HasMoreComments = ref(true);
@@ -428,11 +468,12 @@ const CommentMAP = new Map<string,boolean>();
 const LoadMoreComments = async (count : number) => {
   IsLoading.value = true;
   const data = await get_more_comment({
-    post_id: String(route.params.id),
+    id: String(route.params.id),
+    is_child: false,
     before_id: BeforeID.value,
     count: count
   });
-  console.log(data);
+  //console.log(data);
   if (data.data.data.length > 0) {
     // 循环加入评论列表
     for (const comment of data.data.data.comments) {
@@ -440,7 +481,7 @@ const LoadMoreComments = async (count : number) => {
         CommentMAP.set(comment.id, true);
         const Author = await getUserInfo(comment.user_id);
         const isLiked = await get_like_comment({comment_id: comment.id});
-        console.log(isLiked);
+        //console.log(isLiked);
         const childComments = await GetChildComment(comment.id);
         Comments.value.push({
           ID : comment.id,
@@ -470,7 +511,8 @@ const LoadMoreComments = async (count : number) => {
 // 获取子评论
 const GetChildComment = async (id: string) : Promise<comment_child[]> => {
   const data = await get_more_comment({
-    post_id: id,
+    id: id,
+    is_child: true,
     before_id: "9223372036854775807",//暂时不考虑加载更多
     count: 10
   });
@@ -481,7 +523,7 @@ const GetChildComment = async (id: string) : Promise<comment_child[]> => {
     for (const comment of data.data.data.comments) {
       const Author = await getUserInfo(comment.user_id);
       const isLiked = await get_like_comment({comment_id: comment.id});
-      console.log(isLiked);
+      //console.log(isLiked);
       comments.push({
         ID : comment.id,
         AuthorID: comment.user_id,
@@ -505,13 +547,14 @@ const GetChildComment = async (id: string) : Promise<comment_child[]> => {
 const CommentTo = ref<comment>();
 
 const CreateComment = async () => {
-  let post_id = String(route.params.id);
+  let father_id = "0";
   if (CommentTo.value) {
-    post_id = CommentTo.value.ID;
+    father_id = CommentTo.value.ID;
   }
   const data = await create_comment({
-    post_id: post_id,
+    post_id: String(route.params.id),
     content: newComment.value,
+    father_id: father_id,
   })
   console.log(data);
   if (data.data.code != 20000) {
@@ -533,7 +576,7 @@ const ReplyComment = async (comment : comment) => {
 
 
 // 点赞评论
-const ClickCommentLike = async (selectComment : comment) => {
+const ClickCommentLike = async (selectComment : comment | comment_child) => {
   selectComment.LikedDisabled = true;
   setTimeout(() => {
     selectComment.LikedDisabled = false;

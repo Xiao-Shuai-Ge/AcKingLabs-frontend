@@ -49,13 +49,15 @@ export const like_post = (data : {post_id: string}) => {
 
 export const create_comment = (data : {
     post_id: string,
+    father_id: string,
     content: string,
 }) => {
     return http.post('/api/post/comment',data)
 }
 
 export const get_more_comment = (data : {
-    post_id: string
+    id: string
+    is_child: boolean
     before_id: string
     count: number
 }) => {
