@@ -274,7 +274,7 @@ let BeforeID = ref("9223372036854775807")
 
 onMounted(async () => {
   SelectedTab.value = "popular";
-  await LoadMorePosts(5);
+  await LoadMorePosts(10);
 })
 
 const IsLoading = ref(false);

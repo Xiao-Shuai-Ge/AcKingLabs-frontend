@@ -75,6 +75,8 @@
         </div>
       </div>
 
+      <div id="targetLocation"></div>
+
       <!-- 评论区域 -->
       <div class="mb-64">
         <div class="p-6 border-b border-gray-200">
@@ -85,6 +87,24 @@
 
         <!-- 添加评论 -->
         <div>
+          <div v-if="CommentTo"
+              class="m-2 flex"
+          >
+            <span>回复</span>
+            <span class="ml-2 text-gray-500 text-ellipsis line-clamp-1">
+              {{ CommentTo.AuthorName }} : {{ CommentTo.Content }}
+            </span>
+
+            <div class="ml-auto">
+              <button>
+                <i class="fas fa-xmark text-gray-500 hover:text-gray-400"
+                  @click="CommentTo = undefined"
+                ></i>
+              </button>
+            </div>
+
+          </div>
+
           <div class="mb-3 border-2 border-gray-800 shadow-none">
             <v-md-editor
                 v-model="newComment"
@@ -110,8 +130,6 @@
           </div>
         </div>
 
-        <div id="targetLocation"></div>
-
         <!-- 评论列表 -->
         <div>
           <div v-for="(comment, index) in Comments" :key="index" class="p-6 border-2 border-gray-300 mt-2 rounded-md">
@@ -134,18 +152,27 @@
                 </div>
 
 <!--                <p class="text-gray-800 mb-3">{{ comment.Content }}</p>-->
-                <button
-                    @click="ClickCommentLike(comment)"
-                    :disabled="comment.LikedDisabled"
-                    class="flex items-center text-sm cursor-pointer !rounded-button whitespace-nowrap"
-                    :class="{ 'text-red-500': comment.IsLiked, 'text-gray-500': !comment.IsLiked }"
-                >
-                  <i
-                      class="fa-heart"
-                      :class="comment.IsLiked ? 'fas' : 'far'"
-                  ></i>
-                  <span class="ml-1">{{ comment.Likes }}</span>
-                </button>
+                <div class="flex items-center">
+                  <button
+                      @click="ClickCommentLike(comment)"
+                      :disabled="comment.LikedDisabled"
+                      class="flex items-center text-sm cursor-pointer !rounded-button whitespace-nowrap"
+                      :class="{ 'text-red-500': comment.IsLiked, 'text-gray-500': !comment.IsLiked }"
+                  >
+                    <i
+                        class="fa-heart"
+                        :class="comment.IsLiked ? 'fas' : 'far'"
+                    ></i>
+                    <span class="ml-1">{{ comment.Likes }}</span>
+                  </button>
+                  <a
+                      class="ml-auto text-blue-500 hover:underline cursor-pointer"
+                      @click="ReplyComment(comment)"
+                      href="#targetLocation"
+                  >
+                    回复
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -318,6 +345,24 @@ onMounted(async () => {
   LoadMoreComments(10);
 })
 
+interface comment_child {
+  ID : string;
+  AuthorID : string;
+  AuthorName: string;
+  AuthorAvatar: string;
+  AuthorXp : number;
+  AuthorLevel : number;
+
+  PublishTime : number;
+  PublishDate: string;
+
+  Content: string;
+  Likes: number;
+
+  IsLiked: boolean;
+  LikedDisabled : boolean;
+}
+
 interface comment {
   ID : string;
   AuthorID : string;
@@ -334,6 +379,8 @@ interface comment {
 
   IsLiked: boolean;
   LikedDisabled : boolean;
+
+  ChildComments : comment_child[];
 }
 
 const CommentDisabled = computed(() => {
@@ -394,6 +441,7 @@ const LoadMoreComments = async (count : number) => {
         const Author = await getUserInfo(comment.user_id);
         const isLiked = await get_like_comment({comment_id: comment.id});
         console.log(isLiked);
+        const childComments = await GetChildComment(comment.id);
         Comments.value.push({
           ID : comment.id,
           AuthorID: comment.user_id,
@@ -407,6 +455,7 @@ const LoadMoreComments = async (count : number) => {
           Likes: comment.likes,
           IsLiked: isLiked.data.data.is_like,
           LikedDisabled: false,
+          ChildComments: childComments,
         });
         BeforeID.value = comment.id
       }
@@ -418,11 +467,53 @@ const LoadMoreComments = async (count : number) => {
   }
 }
 
+// 获取子评论
+const GetChildComment = async (id: string) : Promise<comment_child[]> => {
+  const data = await get_more_comment({
+    post_id: id,
+    before_id: "9223372036854775807",//暂时不考虑加载更多
+    count: 10
+  });
+  console.log(data);
+  let comments : comment_child[] = [];
+  if (data.data.data.length > 0) {
+    // 循环加入子评论列表
+    for (const comment of data.data.data.comments) {
+      const Author = await getUserInfo(comment.user_id);
+      const isLiked = await get_like_comment({comment_id: comment.id});
+      console.log(isLiked);
+      comments.push({
+        ID : comment.id,
+        AuthorID: comment.user_id,
+        AuthorName: Author.username,
+        AuthorAvatar: Author.avatar,
+        AuthorXp: Author.xp,
+        AuthorLevel: Author.level,
+        PublishTime: comment.created_at,
+        PublishDate: TimestampFormat(new Date(comment.created_at)),
+        Content: comment.content,
+        Likes: comment.likes,
+        IsLiked: isLiked.data.data.is_like,
+        LikedDisabled: false,
+      });
+    }
+  }
+  return comments;
+}
+
+
+const CommentTo = ref<comment>();
+
 const CreateComment = async () => {
+  let post_id = String(route.params.id);
+  if (CommentTo.value) {
+    post_id = CommentTo.value.ID;
+  }
   const data = await create_comment({
-    post_id: String(route.params.id),
+    post_id: post_id,
     content: newComment.value,
   })
+  console.log(data);
   if (data.data.code != 20000) {
     addMessage('发送失败', 'error')
     return
@@ -435,6 +526,11 @@ const CreateComment = async () => {
   BeforeID.value = "9223372036854775807";
   await LoadMoreComments(10);
 }
+
+const ReplyComment = async (comment : comment) => {
+  CommentTo.value = comment
+}
+
 
 // 点赞评论
 const ClickCommentLike = async (selectComment : comment) => {
