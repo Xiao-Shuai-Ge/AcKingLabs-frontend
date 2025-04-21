@@ -261,7 +261,7 @@ const RefreshPostList = () => {
   PostMAP.clear();
   UserMap.clear();
   HasMorePosts.value = true;
-  LoadMorePosts(5);
+  LoadMorePosts(20);
 }
 
 // 选择排序方式
@@ -274,7 +274,7 @@ let BeforeID = ref("9223372036854775807")
 
 onMounted(async () => {
   SelectedTab.value = "popular";
-  await LoadMorePosts(10);
+  await LoadMorePosts(20);
 })
 
 const IsLoading = ref(false);
