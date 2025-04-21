@@ -8,7 +8,8 @@
         class="logo-container mb-5 transform transition-all duration-800 ease-out"
         :class="{ 'opacity-100': animationStarted, 'opacity-0': !animationStarted }"
     >
-      <img :src="logoUrl" alt="实验室标志" class="w-big h-auto" />
+<!--      <img :src="logoUrl" alt="实验室标志" class="w-big h-auto" />-->
+      <i class="fa-solid fa-paper-plane mr-2 big-icon mb-10"></i>
     </div>
 
     <h1
@@ -18,7 +19,8 @@
         'opacity-0 translate-y-8': !titleAnimationStarted
       }"
     >
-      AcKing 算法竞赛实验室
+<!--      AcKing 算法竞赛实验室-->
+      补天计划
     </h1>
 
     <p
@@ -28,7 +30,7 @@
         'opacity-0 translate-y-8': !textAnimationStarted
       }"
     >
-      我们致力于为校内算法竞赛爱好者提供一个良好的学习交流环境
+<!--      我们致力于为校内算法竞赛爱好者提供一个良好的学习交流环境-->
     </p>
   </div>
 </template>
@@ -90,5 +92,9 @@ p {
   transition:
       opacity 0.8s ease-out,
       transform 0.8s ease-out;
+}
+
+.big-icon {
+  font-size: 15rem;
 }
 </style>

@@ -8,8 +8,10 @@
       <div class="flex items-center ml-5"
            @click="navigateTo('/')"
       >
-        <img class="h-10 w-auto mr-2" src="/assets/AcKing_black.png" alt="公司Logo" />
-        <span class="font-semibold" v-if="!isMobile">AcKing 学习分享平台</span>
+<!--        <img class="h-10 w-auto mr-2" src="/assets/AcKing_black.png" alt="公司Logo" />-->
+<!--        <span class="font-semibold" v-if="!isMobile">AcKing 学习分享平台</span>-->
+        <i class="fa-solid fa-paper-plane mr-2 text-xl"></i>
+        <span class="font-semibold">补天计划</span>
       </div>
 
       <!-- 功能导航 -->
