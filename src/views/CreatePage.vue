@@ -18,21 +18,21 @@
               type="text"
               placeholder="请输入帖子标题"
               maxlength="30"
-              disabled
+              :disabled="titleDisabled"
               class="text-gray-500 h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
         </div>
 
         <div class="flex flex-col gap-2">
           <label for="title" class="text-sm font-medium text-gray-700"
-          >时间</label
+          >{{ sourceName }}</label
           >
           <input
               id="title"
               v-model="postSource"
               type="text"
               placeholder=""
-              disabled
+              :disabled="sourceDisabled"
               maxlength="255"
               class="text-gray-500 h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
@@ -40,8 +40,8 @@
 
         <div class="gap-2">
           <label class="text-sm font-medium text-gray-700 w-1/2 float-left mb-2">类型</label>
-          <label class="text-sm font-medium text-gray-700 w-1/2 float-right mb-2">隐私
-            <span class="text-xs text-gray-500">(公开双倍经验，私密仅自己和管理可见)</span>
+          <label class="text-sm font-medium text-gray-700 w-1/2 float-right mb-2 ">隐私
+            <span class="text-xs text-gray-500" v-if="isDiary">(公开双倍经验，私密仅自己和管理可见)</span>
           </label>
           <div class="w-1/3 float-left relative">
             <button
@@ -180,7 +180,13 @@ import {handleUploadImage} from '@/utils/file'
 
 // 使用信息框
 import {CodeHandler, useMessage} from '@/store/message'
+import {useRoute} from "vue-router";
 const { addMessage } = useMessage()
+
+const route = useRoute();
+const isDiary = computed(() => {
+  return route.path.startsWith("/diary")
+})
 
 // 判断是否是移动端
 const isMobile = ref(false);
@@ -196,21 +202,20 @@ const postContent = ref("");
 const postSource = ref("");
 const selectedType = ref("周记");
 const showTypeDropdown = ref(false);
+const sourceName = ref("时间");
 
-onMounted(()=>{
-  // 自动识别当前是第几周
-  let date = new Date();
-  //date = new Date(1743914958000);
+// 帖子类型列表
+let postTypes = [
+  "周记",
+];
 
-  postSource.value = GetWeekCode(date).name;
-  postTitle.value = GetWeekCode(date).name+" 学习周记"
-
-  postContent.value = localStorage.getItem("draft-diary-content") || "";
-})
+let typesCode : Record<string,string> = {
+  "周记" : "diary",
+}
 
 // 新增的隐私选项
 const isPrivate = ref(false);
-const privacyOptions = ref([
+let privacyOptions = ref([
   {
     value: false,
     label: '公开',
@@ -223,14 +228,44 @@ const privacyOptions = ref([
   }
 ]);
 
-// 帖子类型列表
-const postTypes = [
-  "周记",
-];
+// 禁用
+const titleDisabled = ref(true);
+const sourceDisabled = ref(true);
+const typeDisabled = ref(true);
 
-const typesCode : Record<string,string> = {
-  "周记" : "diary",
-}
+onMounted(()=>{
+  // 根据周记和帖子进行初始化
+  if (isDiary.value) {
+    // 自动识别当前是第几周
+    let date = new Date();
+    //date = new Date(1743914958000);
+
+    postSource.value = GetWeekCode(date).name;
+    postTitle.value = GetWeekCode(date).name+" 学习周记"
+
+    postContent.value = localStorage.getItem("draft-diary-content") || "";
+  } else {
+    selectedType.value = "教程";
+    postTypes = ["教程", "题解", "休闲"];
+    typesCode = {
+      "教程" : "tutorial",
+      "题解" : "solution",
+      "休闲" : "fun"
+    }
+    privacyOptions.value = [
+      {
+        value: false,
+        label: '公开',
+        icon: 'fas fa-globe-asia text-gray-600'
+      }
+    ]
+    titleDisabled.value = false;
+    sourceDisabled.value = false;
+    typeDisabled.value = false;
+    sourceName.value = "来源/网址 (选填)";
+  }
+})
+
 
 // 当前日期
 const currentDate = computed(() => {
@@ -249,12 +284,8 @@ const selectType = (type: string) => {
   showTypeDropdown.value = false;
 };
 
-// 默认禁用
-const typeDisabled = ref(true);
-
 const saveDisabled = computed(() => {
-  console.log("?")
-  if (postTitle.value.length == 0 || postSource.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 5000) {
+  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 20000) {
     return true;
   }
   return false;

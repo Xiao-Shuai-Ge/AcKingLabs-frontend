@@ -67,7 +67,7 @@ onMounted(async () => {
       relationID: active.relation_id,
       disabled: false,
       colorClass: "bg-white",
-      teacherMode: false,
+      teacherMode: true,
     });
   }
 })

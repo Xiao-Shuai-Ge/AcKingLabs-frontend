@@ -32,12 +32,17 @@ const routes = [
     {
         path: '/diary/create',
         name: 'DiaryCreate',
-        component: () => import('../views/DiaryCreatePage.vue')
+        component: () => import('../views/CreatePage.vue')
     },
     {
         path: '/learn',
         name: 'Learn',
         component: () => import('../views/LearnPage.vue')
+    },
+    {
+        path: '/learn/create',
+        name: 'LearnCreate',
+        component: () => import('../views/CreatePage.vue')
     },
     {
         path: '/learn/:id',
