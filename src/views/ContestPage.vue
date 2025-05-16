@@ -64,12 +64,23 @@
           <p class="text-gray-500 text-lg">当前平台没有比赛信息</p>
         </div>
       </div>
+      <!-- 分页 -->
+      <div class="mt-8 mx-auto flex justify-center">
+        <el-pagination
+            :page-size="ContestsPerPage"
+            :total="totalPage*ContestsPerPage"
+            :pager-count="11"
+            layout="prev, pager, next"
+            @current-change="handlePageChange"
+        />
+      </div>
     </div>
+
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from "vue";
+import {ref, computed, watch} from "vue";
 import Header from "@/components/Header.vue";
 
 // 平台数据
@@ -92,6 +103,17 @@ const logo = (platform: string) => {
     return "/assets/acking-contest.png";
   }
 }
+
+const totalPage = ref(3);
+const ContestsPerPage = ref(10);
+const currentPage = ref(1);
+
+watch(
+  () => currentPage,
+  (newVal) => {
+    console.log(newVal);
+  },
+);
 
 // 比赛状态类型
 type ContestStatus = "upcoming" | "ongoing" | "ended";
@@ -215,6 +237,12 @@ const goToContestDetail = (url: string) => {
   window.open(url, "_blank");
 };
 
+// 处理分页
+const handlePageChange = (val: number) => {
+  currentPage.value = val;
+  console.log("当前页码:", currentPage.value);
+  // 这里可以添加获取对应页数据的逻辑
+};
 </script>
 
 <style scoped>

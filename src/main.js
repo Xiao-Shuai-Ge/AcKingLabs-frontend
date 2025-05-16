@@ -20,6 +20,8 @@ import createKatexPlugin from '@kangc/v-md-editor/lib/plugins/katex/cdn'
 import katex from 'katex'
 import 'katex/dist/katex.css' // 引入 KaTeX 的样式
 
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
 
 const KatexPlugin = createKatexPlugin({ katex });
 
@@ -38,4 +40,5 @@ createApp(App)
     .use(VMdPreview)
     .use(router)
     .use(pinia)
+    .use(ElementPlus)
     .mount('#app')
