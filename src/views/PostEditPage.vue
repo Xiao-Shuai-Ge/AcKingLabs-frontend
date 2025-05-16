@@ -241,6 +241,10 @@ const postTypes = [
 
 const typesCode : Record<string,string> = {
   "周记" : "diary",
+  "教程" : "tutorial",
+  "题解" : "solution",
+  "比赛" : "contest",
+  "闲聊" : "fun",
 }
 
 // 当前日期
@@ -265,7 +269,7 @@ const typeDisabled = ref(true);
 
 const saveDisabled = computed(() => {
   console.log("?")
-  if (postTitle.value.length == 0 || postSource.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 5000) {
+  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 5000) {
     return true;
   }
   return false;

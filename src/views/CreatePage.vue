@@ -246,11 +246,12 @@ onMounted(()=>{
     postContent.value = localStorage.getItem("draft-diary-content") || "";
   } else {
     selectedType.value = "教程";
-    postTypes = ["教程", "题解", "休闲"];
+    postTypes = ["教程", "题解","比赛","闲聊"];
     typesCode = {
       "教程" : "tutorial",
       "题解" : "solution",
-      "休闲" : "fun"
+      "比赛" : "contest",
+      "闲聊" : "fun"
     }
     privacyOptions.value = [
       {
@@ -314,7 +315,11 @@ const publishPost = async () => {
   // 删除草稿内容
   localStorage.removeItem("draft-diary-content");
   // 跳转
-  await router.push("/diary/" + data.data.data.id)
+  if (isDiary.value) {
+    await router.push("/diary/" + data.data.data.id)
+  } else {
+    await router.push("/learn/" + data.data.data.id)
+  }
 };
 
 // 保存草稿

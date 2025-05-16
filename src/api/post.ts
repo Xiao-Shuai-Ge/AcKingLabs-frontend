@@ -88,6 +88,18 @@ export const get_more_post = (data : {
     })
 }
 
+export const get_page_post = (data : {
+    type: string
+    source: string
+    page: number
+    by : string
+    count: number
+}) => {
+    return http.get('/api/post/post-page',{
+        params: data
+    })
+}
+
 export const set_featured = (data : {post_id: string}) => {
     return http.post('/api/post/feature',data)
 }

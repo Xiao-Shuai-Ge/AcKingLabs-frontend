@@ -79,7 +79,7 @@
 
         <div class="mt-2 mb-2 flex items-center gap-2">
           <span class="text-2xl font-bold"> {{ post.Title }} </span>
-          <span class="text-gray-500 border-2 border-gray-500 rounded-md px-1 text-sm"> {{post.TypeName}} </span>
+          <span class="border-2 rounded-md px-1 text-sm" :class="post.TypeColor"> {{post.TypeName}} </span>
           <span v-if="post.IsPrivate" class="text-blue-500 border-2 border-blue-500 rounded-md px-1 text-sm">私密</span>
           <span v-if="post.IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
           <span v-if="post.IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md px-1 text-sm">管理推荐</span>
@@ -138,7 +138,7 @@ import router from "@/router";
 import {get_diary_list, get_like_post, get_more_post} from "@/api/post";
 import {CheckLevel , GetTextColor} from "@/utils/level";
 import {get_user_info} from "@/api/user";
-import {PostTypeToName} from "@/utils/post";
+import {PostTypeToColor, PostTypeToName} from "@/utils/post";
 import {useUserStore} from "@/store/user";
 
 // 用户信息缓存--------------------------------------------------------
@@ -320,6 +320,7 @@ const LoadMorePosts = async (count:number) => {
           PublishTime: post.created_at,
           PublishDate: TimestampFormat(new Date(post.created_at)),
 
+          TypeColor: PostTypeToColor(post.type),
           TypeName: PostTypeToName(post.type),
           Title: post.title,
           Content: post.content_short,
