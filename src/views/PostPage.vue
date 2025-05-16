@@ -2,7 +2,7 @@
 <template>
   <div class="min-h-screen bg-white text-black">
     <Header/>
-    <div class="max-w-3xl mx-auto px-4 py-8 mt-16">
+    <div class="max-w-4xl mx-auto px-4 py-8 mt-16">
       <!-- 作者信息 -->
       <div class="inline-block mb-2">
         <div class="flex items-center gap-2">

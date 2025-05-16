@@ -60,6 +60,16 @@ const routes = [
         component: () => import('../views/MessagePage.vue')
     },
     {
+        path: '/contest',
+        name: 'Contest',
+        component: () => import('../views/ContestPage.vue')
+    },
+    {
+        path: '/more',
+        name: 'More',
+        component: () => import('../views/MorePage.vue')
+    },
+    {
         path: '/more/ulearning',
         name: 'Ulearning',
         component: () => import('../views/Ulearning.vue')

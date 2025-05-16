@@ -8,15 +8,15 @@
       <div class="flex items-center ml-5"
            @click="navigateTo('/')"
       >
-        <img class="h-10 w-auto mr-2" src="/assets/AcKing_black.png" alt="公司Logo" />
+        <img class="h-10 w-1/6 mr-2" src="/assets/AcKing_black.png" alt="公司Logo" />
         <span class="font-semibold" v-if="!isMobile">AcKing 学习分享平台</span>
       </div>
 
       <!-- 功能导航 -->
       <div
-          class="flex items-center justify-center overflow-x-auto hide-scrollbar h-full flex-1"
+          class="flex items-center justify-center overflow-x-auto hide-scrollbar h-full flex-1 w-2/3"
       >
-        <div class="flex h-full">
+        <div class="flex h-full mx-auto">
           <div
               v-for="(item, index) in navItems"
               :key="index"
@@ -38,11 +38,11 @@
 
       <!-- 用户信息 -->
       <div
-          class="flex items-center mr-5 relative"
+          class="flex items-center mr-5 relative w-1/6"
           @mouseenter="openDropdown()"
           @mouseleave="closeDropdown()"
       >
-        <div class="flex items-center cursor-pointer">
+        <div class="flex items-center cursor-pointer ml-auto">
           <span v-if="myLevel === 0" class="text-sm text-gray-500 mr-1">(未实名)</span>
           <span class="text-base font-bold mr-2" :class = GetTextColor(myLevel)>{{ userName }}</span>
           <div class="w-9 h-9 rounded-full overflow-hidden bg-gray-200 mr-2.5">
@@ -110,6 +110,8 @@ const MessageCount = ref(0);
 const navItems = ref([
   { name: "打卡", path: "/diary" , icon: "fa-solid fa-square-check" , color : "border-blue-500" },
   { name: "学习", path: "/learn" , icon: "fa-solid fa-book-open-reader" , color : "border-yellow-500"},
+  { name: "比赛", path: "/contest" , icon: "fa-solid fa-chart-simple" , color : "border-red-500" },
+  { name: "更多", path: "/more" , icon: "fa-solid fa-bars" , color : "border-green-500" },
 ]);
 
 // 下拉菜单选项

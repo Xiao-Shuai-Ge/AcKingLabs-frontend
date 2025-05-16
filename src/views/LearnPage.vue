@@ -2,7 +2,7 @@
 <template>
   <div class="min-h-screen bg-gray-50 py-10 px-4">
     <Header/>
-    <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
       <!-- 筛选区域 -->
       <div class="mb-8 bg-white p-6 rounded-lg shadow-md ">
         <!-- 帖子类型筛选 -->
