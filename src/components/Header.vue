@@ -5,10 +5,10 @@
         class="fixed top-0 left-0 w-full h-[60px] bg-white shadow-sm z-50 flex items-center justify-between"
     >
       <!-- Logo区域 -->
-      <div class="flex items-center ml-5"
+      <div class="flex items-center ml-5 w-1/6"
            @click="navigateTo('/')"
       >
-        <img class="h-10 w-1/6 mr-2" src="/assets/AcKing_black.png" alt="公司Logo" />
+        <img class="h-10 mr-2" src="/assets/AcKing_black.png" alt="公司Logo" />
         <span class="font-semibold" v-if="!isMobile">AcKing 学习分享平台</span>
       </div>
 

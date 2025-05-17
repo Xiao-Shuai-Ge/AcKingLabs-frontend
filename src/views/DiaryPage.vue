@@ -51,19 +51,19 @@
               @click="SelectTab(tab.id)"
               :class="[
               'px-4 py-2 rounded-xl font-medium cursor-pointer whitespace-nowrap border-2 border-gray-800',
-              SelectedTab === tab.id ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 hover:bg-gray-100'
+              SelectedTab === tab.id ? 'bg-black text-white' : 'bg-white text-black hover:bg-gray-100'
             ]"
           >
             {{ tab.name }}
           </button>
         </div>
-        <hr class="border-2 border-gray-800 mt-2"/>
+<!--        <hr class="border-2 border-gray-800 mt-2"/>-->
       </div>
 
       <div
           v-for="(post, index) in Posts"
           :key="index"
-          class=" border-2 border-gray-500 rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer"
+          class=" border-2 border-gray-800 bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer"
           @click="navigateToPost(post.ID)"
       >
         <div class="flex items-center mb-2">

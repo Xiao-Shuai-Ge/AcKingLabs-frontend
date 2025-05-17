@@ -22,18 +22,27 @@
       <!-- 比赛列表 -->
       <div class="space-y-6 mt-5">
         <div
-            v-for="contest in filteredContests"
+            v-for="contest in contests"
             :key="contest.id"
             class="contest-card bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
             @click="goToContestDetail(contest.url)"
         >
-          <div class="p-6 flex justify-between items-center">
-            <div class="flex-1">
+          <div class="p-4 flex justify-between items-center">
+            <img
+                :src="logo(contest.platform)"
+                :alt="contest.platform"
+                class="object-contain p-2 h-32 border-r-2 border-gray-200"
+            >
+            <div class="flex-1 ml-4">
               <h3 class="text-xl font-bold text-gray-900 mb-2">
-                {{ contest.name }}
+                {{ contest.title }}
               </h3>
               <p class="text-gray-600 mb-2">
+                <i class="fa-regular fa-clock"></i>
                 {{ formatContestTime(contest.startTime, contest.endTime) }}
+                <span class="text-gray-500 text-sm">
+                  ({{ formatDuration(contest.duration) }})
+                </span>
               </p>
               <div class="flex items-center">
                 <span
@@ -49,26 +58,15 @@
                 >
               </div>
             </div>
-            <img
-                :src="logo(contest.platform)"
-                :alt="contest.platform"
-                class="object-contain h-32"
-            >
           </div>
 
-        </div>
-
-        <!-- 无数据状态 -->
-        <div v-if="filteredContests.length === 0" class="text-center py-16">
-          <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
-          <p class="text-gray-500 text-lg">当前平台没有比赛信息</p>
         </div>
       </div>
       <!-- 分页 -->
       <div class="mt-8 mx-auto flex justify-center">
         <el-pagination
-            :page-size="ContestsPerPage"
-            :total="totalPage*ContestsPerPage"
+            :page-size="contestsPerPage"
+            :total="totalPages*contestsPerPage"
             :pager-count="11"
             layout="prev, pager, next"
             @current-change="handlePageChange"
@@ -80,15 +78,17 @@
 </template>
 
 <script lang="ts" setup>
-import {ref, computed, watch} from "vue";
+import {ref, computed, watch, onMounted} from "vue";
 import Header from "@/components/Header.vue";
+import {get_contest_list} from "@/api/contest";
+import {Timer} from "@element-plus/icons-vue";
 
 // 平台数据
 const platforms = [
   { id: "all", name: "全部平台" },
-  { id: "codeforces", name: "Codeforces" },
-  { id: "atcoder", name: "AtCoder" },
-  { id: "nowcoder", name: "牛客网" },
+  { id: "Codeforces", name: "Codeforces" },
+  { id: "AtCoder", name: "AtCoder" },
+  { id: "Nowcoder", name: "牛客网" },
   { id: "acking", name: "其他" }
 ];
 
@@ -104,8 +104,8 @@ const logo = (platform: string) => {
   }
 }
 
-const totalPage = ref(3);
-const ContestsPerPage = ref(10);
+const totalPages = ref(3);
+const contestsPerPage = ref(5);
 const currentPage = ref(1);
 
 watch(
@@ -121,77 +121,84 @@ type ContestStatus = "upcoming" | "ongoing" | "ended";
 // 比赛数据接口
 interface Contest {
   id: string;
-  name: string;
+  title: string;
   platform: string;
-  startTime: Date;
-  endTime: Date;
+  startTime: number;
+  endTime: number;
+  duration: number;
   status: ContestStatus;
   url: string;
-  solutionUrl?: string;
 }
 
 // 当前选中的平台
 const selectedPlatform = ref("all");
 
 // 模拟比赛数据
-const contests = ref<Contest[]>([
-  {
-    id: "2",
-    name: "Codeforces Round #870 (Div. 2)",
-    platform: "Codeforces",
-    startTime: new Date(2025, 4, 14, 20, 0),
-    endTime: new Date(2025, 4, 14, 22, 0),
-    status: "ended",
-    url: "https://codeforces.com/contest/1826",
-    solutionUrl: "https://codeforces.com/blog/entry/115462",
-  },
-  {
-    id: "3",
-    name: "AtCoder Beginner Contest 302",
-    platform: "AtCoder",
-    startTime: new Date(2025, 5, 16, 20, 0),
-    endTime: new Date(2025, 5, 16, 22, 0),
-    status: "ongoing",
-    url: "https://atcoder.jp/contests/abc302",
-  },
-  {
-    id: "4",
-    name: "牛客周赛 Round 5",
-    platform: "Nowcoder",
-    startTime: new Date(2025, 5, 18, 19, 0),
-    endTime: new Date(2025, 5, 18, 21, 0),
-    status: "upcoming",
-    url: "https://ac.nowcoder.com/acm/contest/46800",
-  },
-  {
-    id: "5",
-    name: "2025 AcKing&竞赛中心暑假周赛-第一周",
-    platform: "AcKing",
-    startTime: new Date(2025, 5, 19, 10, 30),
-    endTime: new Date(2025, 5, 19, 12, 30),
-    status: "upcoming",
-    url: "https://leetcode.cn/contest/biweekly-contest-104/",
-  },
-]);
+const contests = ref<Contest[]>([]);
 
-// 根据选中平台筛选比赛
-const filteredContests = computed(() => {
-  if (selectedPlatform.value === "all") {
-    return contests.value;
+onMounted(() => {
+  LoadContests();
+})
+
+const IsLoading = ref(false);
+
+// 加载比赛
+const LoadTime = ref(0);
+const LoadContests = async () => {
+  contests.value = [];
+  LoadTime.value = new Date().getTime();
+  const NowLoadTime = LoadTime.value;
+
+  const data = await get_contest_list({
+    type: selectedPlatform.value,
+    page : currentPage.value,
+    count : contestsPerPage.value,
+  })
+  console.log(data)
+  if (data.data.data.length > 0) {
+    // 循环加入帖子列表
+    for (const contest of data.data.data.contests) {
+      console.log(contest);
+      if (LoadTime.value != NowLoadTime) {
+        // 不再加载此次数据，退出循环
+        break;
+      }
+      let status: ContestStatus = "upcoming";
+      if (contest.start_time < new Date().getTime() && contest.end_time > new Date().getTime()) {
+        status = "ongoing";
+      } else if (contest.end_time < new Date().getTime()) {
+        status = "ended";
+      }
+      contests.value.push({
+        id: contest.id,
+        title: contest.title,
+        platform: contest.platform,
+        startTime: contest.start_time,
+        endTime: contest.end_time,
+        duration: contest.duration,
+        status: status,
+        url: contest.url,
+      });
+    }
   }
-  return contests.value.filter(
-      (contest) => contest.platform.toLowerCase() === selectedPlatform.value,
-  );
-});
+  totalPages.value = data.data.data.page_total
+  IsLoading.value = false;
+}
 
 // 选择平台
 const selectPlatform = (platformId: string) => {
   selectedPlatform.value = platformId;
+  LoadContests();
 };
 
+// setInterval(() => {
+//   console.log(contests.value.length);
+// }, 100);
+
 // 格式化比赛时间
-const formatContestTime = (startTime: Date, endTime: Date) => {
-  const formatDate = (date: Date) => {
+const formatContestTime = (startTime: number, endTime: number) => {
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const day = date.getDate().toString().padStart(2, "0");
@@ -203,6 +210,33 @@ const formatContestTime = (startTime: Date, endTime: Date) => {
 
   return `${formatDate(startTime)} 至 ${formatDate(endTime)}`;
 };
+
+const formatDuration = (duration: number) => {
+  const seconds = duration % 60;
+  duration = Math.floor(duration / 60);
+  const minutes = duration % 60;
+  duration = Math.floor(duration / 60);
+  const hours = duration % 24;
+  duration = Math.floor(duration / 24);
+  const days = duration;
+
+
+  let result = "";
+  if (days > 0) {
+    result += `${days} 天`;
+  }
+  if (hours > 0) {
+    result += ` ${hours} 小时`;
+  }
+  if (minutes > 0) {
+    result += ` ${minutes} 分`;
+  }
+  if (seconds > 0) {
+    result += ` ${seconds} 秒`;
+  }
+  result += " ";
+  return result;
+}
 
 // 获取状态文本
 const getStatusText = (status: ContestStatus) => {
@@ -240,6 +274,7 @@ const goToContestDetail = (url: string) => {
 // 处理分页
 const handlePageChange = (val: number) => {
   currentPage.value = val;
+  LoadContests();
   console.log("当前页码:", currentPage.value);
   // 这里可以添加获取对应页数据的逻辑
 };

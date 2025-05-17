@@ -47,7 +47,7 @@
         <div
             v-for="(post, index) in Posts"
             :key="index"
-            class="bg-white border border-gray-800 rounded-lg p-2 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+            class="bg-white border border-gray-200 rounded-lg p-2 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
             @click="navigateToPost(post.ID)"
         >
           <div class="flex items-center mb-2">
@@ -93,55 +93,15 @@
           </div>
         </div>
       </div>
-
-
-      <!-- 分页器 -->
-      <div class="flex justify-center items-center space-x-2 mt-8">
-        <button
-            @click="goToPage(1)"
-            :disabled="currentPage === 1"
-            class="px-3 py-1 rounded-button border border-gray-300 text-sm cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <i class="fas fa-angle-double-left"></i>
-        </button>
-        <button
-            @click="goToPage(currentPage - 1)"
-            :disabled="currentPage === 1"
-            class="px-3 py-1 rounded-button border border-gray-300 text-sm cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <i class="fas fa-angle-left"></i>
-        </button>
-
-        <template v-for="page in displayedPages" :key="page">
-          <button
-              v-if="page !== '...'"
-              @click="goToPage(page)"
-              :class="[
-              'px-3 py-1 rounded-button text-sm cursor-pointer whitespace-nowrap',
-              currentPage === page
-                ? 'bg-black text-white'
-                : 'border border-gray-300 hover:bg-gray-100'
-            ]"
-          >
-            {{ page }}
-          </button>
-          <span v-else class="px-2">...</span>
-        </template>
-
-        <button
-            @click="goToPage(currentPage + 1)"
-            :disabled="currentPage === totalPages"
-            class="px-3 py-1 rounded-button border border-gray-300 text-sm cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <i class="fas fa-angle-right"></i>
-        </button>
-        <button
-            @click="goToPage(totalPages)"
-            :disabled="currentPage === totalPages"
-            class="px-3 py-1 rounded-button border border-gray-300 text-sm cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <i class="fas fa-angle-double-right"></i>
-        </button>
+      <!-- 分页 -->
+      <div class="mt-8 mx-auto flex justify-center">
+        <el-pagination
+            :page-size="postsPerPage"
+            :total="totalPages*postsPerPage"
+            :pager-count="11"
+            layout="prev, pager, next"
+            @current-change="handlePageChange"
+        />
       </div>
     </div>
     <div class="floating-component">
@@ -300,13 +260,13 @@ const selectSortOption = (sortId: string) => {
   LoadPosts(); // 重新加载帖子列表
 };
 
-// 跳转到指定页
-const goToPage = (page: number) => {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page;
-    Posts.value = []; // 清空帖子列表
-    LoadPosts(); // 重新加载帖子列表
-  }
+
+// 处理分页
+const handlePageChange = (val: number) => {
+  currentPage.value = val;
+  Posts.value = []; // 清空帖子列表
+  LoadPosts(); // 重新加载帖子列表
+  console.log("当前页码:", currentPage.value);
 };
 
 // 获取类型名称
@@ -329,53 +289,6 @@ const getTypeClass = (typeId: string) => {
   }
 };
 
-// 计算要显示的页码
-const displayedPages = computed(() => {
-  const pages = [];
-  const maxVisiblePages = 5;
-
-  if (totalPages.value <= maxVisiblePages) {
-    // 如果总页数小于等于最大可见页数，显示所有页码
-    for (let i = 1; i <= totalPages.value; i++) {
-      pages.push(i);
-    }
-  } else {
-    // 总是显示第一页
-    pages.push(1);
-
-    // 计算中间页码的起始和结束
-    let startPage = Math.max(2, currentPage.value - 1);
-    let endPage = Math.min(totalPages.value - 1, currentPage.value + 1);
-
-    // 调整以确保显示3个中间页码
-    if (startPage === 2) {
-      endPage = Math.min(4, totalPages.value - 1);
-    }
-    if (endPage === totalPages.value - 1) {
-      startPage = Math.max(2, totalPages.value - 3);
-    }
-
-    // 添加省略号
-    if (startPage > 2) {
-      pages.push("...");
-    }
-
-    // 添加中间页码
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    // 添加省略号
-    if (endPage < totalPages.value - 1) {
-      pages.push("...");
-    }
-
-    // 总是显示最后一页
-    pages.push(totalPages);
-  }
-
-  return pages;
-});
 
 const navigateTo = (url : string) => {
   router.push(url);
