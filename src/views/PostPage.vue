@@ -48,7 +48,18 @@
           <span v-if="IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
           <span v-if="IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md px-1 text-sm">管理推荐</span>
         </div>
+        <div v-if="Source && Type != 'diary'">
+          <hr class="border-1 border-gray-800 mb-3" />
+          <div class="my-2 mx-6 flex text-sm "
+               @click="goToSource(Source)"
+          >
+            <span>来源:</span>
+            <span class="ml-2 text-blue-500 underline">
+              {{ Source }}
+            </span>
 
+          </div>
+        </div>
 
         <hr class="border-1 border-gray-800 mb-3" />
         <!-- 帖子内容 -->
@@ -298,6 +309,7 @@ const PublishTime = ref(0);
 const PublishDate = ref("");
 
 const Title = ref("");
+const Source = ref("");
 const Content = ref("");
 const Likes = ref(0);
 const CommentCount = ref(0);
@@ -355,6 +367,7 @@ onMounted(async () => {
 
   AuthorID.value = data.data.data.user_id;
   Title.value = data.data.data.title;
+  Source.value = data.data.data.source;
   Content.value = data.data.data.content;
   Likes.value = data.data.data.likes;
   CommentCount.value = data.data.data.comments;
@@ -605,6 +618,11 @@ const navigateToProfile = (id : string) => {
 const navigateToEditPage = () => {
   router.push("/diary/"+route.params.id+"/edit");
 }
+
+// 跳转到比赛详情
+const goToSource = (url: string) => {
+  window.open(url, "_blank");
+};
 
 //测试，循环点赞
 // setInterval(async () => {
