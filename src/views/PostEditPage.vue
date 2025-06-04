@@ -269,7 +269,7 @@ const typeDisabled = ref(true);
 
 const saveDisabled = computed(() => {
   console.log("?")
-  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 5000) {
+  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 20000) {
     return true;
   }
   return false;

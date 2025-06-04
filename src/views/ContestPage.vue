@@ -22,10 +22,11 @@
       <!-- 比赛列表 -->
       <div class="space-y-6 mt-5">
         <div
-            v-for="contest in contests"
+            v-for="(contest,index) in contests"
             :key="contest.id"
-            class="contest-card bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
-            @click="goToContestDetail(contest.url)"
+            class="animation-delay contest-card bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 cursor-pointer"
+            @click="goToUrl(contest.url)"
+            :style="{ animationDelay: `${index * 0.1}s` }"
         >
           <div class="p-4 flex justify-between items-center">
             <img
@@ -34,7 +35,9 @@
                 class="object-contain p-2 h-32 border-r-2 border-gray-200"
             >
             <div class="flex-1 ml-4">
-              <h3 class="text-xl font-bold text-gray-900 mb-2">
+              <h3 class="text-xl font-bold mb-2"
+                  :class="{ 'text-yellow-400': contest.isRecommend , 'text-gray-900':!contest.isRecommend }"
+              >
                 {{ contest.title }}
               </h3>
               <p class="text-gray-600 mb-2">
@@ -58,6 +61,37 @@
                 >
               </div>
             </div>
+            <div class="mr-4 flex items-center">
+              <div v-if="contest.startTime > new Date().getTime()+1000*60*20"
+                @click.stop="BookingContest(contest)"
+              >
+                <div v-if="contest.isBooking">
+                  <el-button :disabled="contest.isBookingDisabled" plain round >
+                    <el-icon class="mr-2"><Bell /></el-icon>
+                    预约
+                  </el-button>
+                </div>
+                <div v-else>
+                  <el-button :disabled="contest.isBookingDisabled" type="primary" round>
+                    <el-icon class="mr-2" ><Bell /></el-icon>
+                    预约
+                  </el-button>
+                </div>
+
+              </div>
+              <div v-else>
+                <el-button type="success" round
+                  @click.stop="goToContestDetail(contest.id)"
+                >
+                  <el-icon class="mr-2"><ChatLineSquare /></el-icon>
+                  题解
+                </el-button>
+              </div>
+
+              <div v-if="IsAdmin" class="ml-2">
+                <el-button :icon="Setting" size="large" circle text @click.stop="OpenEditForm(contest)"/>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -73,15 +107,59 @@
         />
       </div>
     </div>
+    <div v-if="IsAdmin" class="floating-component">
+      <div
+          class="bg-blue-400 rounded-md shadow-lg p-4 duration-300 hover:scale-105 hover:bg-blue-500 cursor-pointer"
+          @click="navigateTo('/contest/create')"
+      >
+        <i class="fas fa-add text-white text-2xl w-6 h-5"></i>
+      </div>
+    </div>
+    <el-dialog
+        v-model="centerDialogVisible"
+        title="比赛设置"
+        width="500"
+        align-center
+    >
+      <span>精选比赛</span>
+      <el-switch
+          v-model="IsRecommend"
+          class="ml-2"
+      />
 
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="centerDialogVisible = false">
+            取消
+          </el-button>
+          <el-button type="primary" @click="postContestSetting()">
+            确认
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
 import {ref, computed, watch, onMounted} from "vue";
 import Header from "@/components/Header.vue";
-import {get_contest_list} from "@/api/contest";
-import {Timer} from "@element-plus/icons-vue";
+import {get_contest_list, get_booking, create_booking, set_recommend} from "@/api/contest";
+import {Timer, Bell, ChatLineSquare, Plus, Setting} from "@element-plus/icons-vue";
+import router from "@/router";
+const { addMessage } = useMessage()
+
+import {useUserStore} from "@/store/user";
+import {CodeHandler, useMessage} from "@/store/message";
+const userStore = useUserStore();
+
+const centerDialogVisible = ref(false)
+
+const IsAdmin = computed(() => {
+  if (userStore.getUserInfo().role>=3) {
+    return true;
+  }
+});
 
 // 平台数据
 const platforms = [
@@ -89,7 +167,8 @@ const platforms = [
   { id: "Codeforces", name: "Codeforces" },
   { id: "AtCoder", name: "AtCoder" },
   { id: "Nowcoder", name: "牛客网" },
-  { id: "acking", name: "其他" }
+  { id: "AcKing", name: "其他" },
+  { id: "recommend",name:"精选比赛"}
 ];
 
 const logo = (platform: string) => {
@@ -128,7 +207,32 @@ interface Contest {
   duration: number;
   status: ContestStatus;
   url: string;
+  isBooking: boolean;
+  isBookingDisabled: boolean;
+  isRecommend: boolean;
 }
+
+const BookingContest = async (contest: Contest) => {
+  contest.isBookingDisabled = true;
+  setTimeout(() => {
+    contest.isBookingDisabled = false;
+  },300)
+  const data = await create_booking({
+    contest_id: contest.id,
+  })
+  console.log(data);
+  if (data.data.code === 20000) {
+    if (data.data.data.is_booking) {
+      addMessage('预约成功','success')
+    } else {
+      addMessage('取消预约成功','success')
+    }
+  } else {
+    addMessage('操作失败', 'error')
+  }
+  contest.isBooking = !contest.isBooking;
+}
+
 
 // 当前选中的平台
 const selectedPlatform = ref("all");
@@ -169,6 +273,10 @@ const LoadContests = async () => {
       } else if (contest.end_time < new Date().getTime()) {
         status = "ended";
       }
+      const data_booking = await get_booking({
+        contest_id: contest.id,
+      })
+      console.log(data_booking)
       contests.value.push({
         id: contest.id,
         title: contest.title,
@@ -178,6 +286,9 @@ const LoadContests = async () => {
         duration: contest.duration,
         status: status,
         url: contest.url,
+        isBooking: data_booking.data.data.is_booking,
+        isBookingDisabled: false,
+        isRecommend: contest.is_recommend,
       });
     }
   }
@@ -190,6 +301,36 @@ const selectPlatform = (platformId: string) => {
   selectedPlatform.value = platformId;
   LoadContests();
 };
+
+// 编辑表单
+const IsRecommend = ref(false);
+const selectedContest = ref<Contest>();
+
+const OpenEditForm = (contest: Contest) => {
+  centerDialogVisible.value = true;
+  IsRecommend.value = contest.isRecommend;
+  selectedContest.value = contest;
+};
+
+const postContestSetting = async () => {
+  // 发送请求
+  const data = await set_recommend({
+    contest_id: selectedContest.value?.id,
+    is_recommend: IsRecommend.value,
+  })
+  console.log(data);
+  if (data.data.code === 20000) {
+    addMessage('设置成功','success')
+    selectedContest.value.isRecommend = IsRecommend.value
+  } else {
+    addMessage('设置失败', 'error')
+  }
+  // 关闭窗口
+  centerDialogVisible.value = false
+}
+
+
+
 
 // setInterval(() => {
 //   console.log(contests.value.length);
@@ -266,9 +407,14 @@ const getStatusClass = (status: ContestStatus) => {
   }
 };
 
-// 跳转到比赛详情
-const goToContestDetail = (url: string) => {
+// 跳转到比赛链接
+const goToUrl = (url: string) => {
   window.open(url, "_blank");
+};
+
+// 跳转到比赛详情
+const goToContestDetail = (contest_id: string) => {
+  router.push(`/contest/${contest_id}`);
 };
 
 // 处理分页
@@ -277,6 +423,10 @@ const handlePageChange = (val: number) => {
   LoadContests();
   console.log("当前页码:", currentPage.value);
   // 这里可以添加获取对应页数据的逻辑
+};
+
+const navigateTo = (url : string) => {
+  router.push(url);
 };
 </script>
 
@@ -293,5 +443,27 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+.floating-component {
+  position: fixed; /* 固定位置 */
+  bottom: 5%; /* 下边距 */
+  right: 5%; /* 右边距 */
+  z-index: 10; /* 设置 z-index 确保悬浮在顶层 */
+}
+
+.animation-delay {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 </style>

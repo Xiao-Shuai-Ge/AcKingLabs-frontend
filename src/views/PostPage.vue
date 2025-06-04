@@ -41,15 +41,7 @@
       </div>
       <!-- 帖子区域 -->
       <div class="bg-white rounded-lg shadow-sm border-2 border-gray-800 mb-8">
-        <div class="m-6 mb-4 flex items-center gap-3">
-          <span class="text-3xl font-bold"> {{ Title }} </span>
-          <span class="text-gray-500 border-2 border-gray-500 rounded-md px-1 text-sm"> {{TypeName}} </span>
-          <span v-if="IsPrivate" class="text-blue-500 border-2 border-blue-500 rounded-md px-1 text-sm">私密</span>
-          <span v-if="IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
-          <span v-if="IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md px-1 text-sm">管理推荐</span>
-        </div>
         <div v-if="Source && Type != 'diary'">
-          <hr class="border-1 border-gray-800 mb-3" />
           <div class="my-2 mx-6 flex text-sm "
                @click="goToSource(Source)"
           >
@@ -59,6 +51,15 @@
             </span>
 
           </div>
+<!--          <hr class="border-1 border-gray-800 mb-3" />-->
+        </div>
+        <div v-else class="mb-5"></div>
+        <div class="m-6 mb-4 mt-1 flex items-center gap-3">
+          <span class="text-3xl font-bold"> {{ Title }} </span>
+          <span class="text-gray-500 border-2 border-gray-500 rounded-md px-1 text-sm"> {{TypeName}} </span>
+          <span v-if="IsPrivate" class="text-blue-500 border-2 border-blue-500 rounded-md px-1 text-sm">私密</span>
+          <span v-if="IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
+          <span v-if="IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md px-1 text-sm">管理推荐</span>
         </div>
 
         <hr class="border-1 border-gray-800 mb-3" />

@@ -63,8 +63,9 @@
       <div
           v-for="(post, index) in Posts"
           :key="index"
-          class=" border-2 border-gray-800 bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer"
+          class="animation-delay  border-2 border-gray-800 bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer"
           @click="navigateToPost(post.ID)"
+          :style="{ animationDelay: `${index * 0.1}s` }"
       >
         <div class="flex items-center mb-2">
           <img
@@ -380,6 +381,21 @@ const navigateToPost = (id : string) => {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+.animation-delay {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }
 </style>

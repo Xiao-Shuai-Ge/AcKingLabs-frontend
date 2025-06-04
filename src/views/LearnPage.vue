@@ -47,8 +47,9 @@
         <div
             v-for="(post, index) in Posts"
             :key="index"
-            class="bg-white border border-gray-200 rounded-lg p-2 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+            class="animation-delay bg-white border border-gray-200 rounded-lg p-2 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
             @click="navigateToPost(post.ID)"
+            :style="{ animationDelay: `${index * 0.1}s` }"
         >
           <div class="flex items-center mb-2">
             <img
@@ -187,7 +188,7 @@ onMounted(async () => {
 const selectedPostType = ref("post");
 const selectedSortOption = ref("popular");
 
-// 加载更多周记
+// 加载帖子列表
 const LoadTime = ref(0);
 const LoadPosts = async () => {
   LoadTime.value = new Date().getTime();
@@ -327,5 +328,20 @@ input[type="number"] {
   bottom: 5%; /* 下边距 */
   right: 5%; /* 右边距 */
   z-index: 10000; /* 设置 z-index 确保悬浮在顶层 */
+}
+
+.animation-delay {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 </style>

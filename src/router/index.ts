@@ -65,9 +65,24 @@ const routes = [
         component: () => import('../views/ContestPage.vue')
     },
     {
+        path: '/contest/:id',
+        name: 'ContestDetail',
+        component: () => import('../views/ContestDetailPage.vue')
+    },
+    {
+        path: '/contest/create',
+        name: 'ContestCreate',
+        component: () => import('../views/ContestCreatePage.vue')
+    },
+    {
         path: '/more',
         name: 'More',
         component: () => import('../views/MorePage.vue')
+    },
+    {
+        path: '/more/about',
+        name: 'About',
+        component: () => import('../views/AboutPage.vue')
     },
     {
         path: '/more/ulearning',

@@ -3,9 +3,9 @@ import {useUserStore} from "@/store/user";
 
 // 创建axios实例
 const http = axios.create({
-    baseURL: "http://localhost:8080",
-    //baseURL: "http://120.79.250.47:8080",
-    timeout: 10000
+    //baseURL: "http://localhost:8080",
+    baseURL: "http://120.79.250.47:8080",
+    timeout: 20000
 })
 
 // 获取token的函数（方便后续更换存储方式）

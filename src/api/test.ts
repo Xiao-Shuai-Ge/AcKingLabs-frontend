@@ -22,3 +22,17 @@ export const signin_teacher = (data : {
 }) => {
     return http.post('/api/common/signin-teacher',data)
 }
+
+export const get_auto_list = () => {
+    return http.get('/api/common/auto-list')
+}
+
+export const save_auto_setting = (data: {
+    is_auto: boolean,
+    class_id: number,
+    course_id: number,
+    course_name: string,
+    percent: number,
+}) => {
+    return http.post('/api/common/auto-setting',data)
+}

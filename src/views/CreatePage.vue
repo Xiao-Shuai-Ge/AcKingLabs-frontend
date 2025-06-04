@@ -265,6 +265,15 @@ onMounted(()=>{
     typeDisabled.value = false;
     sourceName.value = "来源/网址 (选填)";
   }
+  // 是否为比赛题解贴
+  console.log(route.query)
+  if (route.query.contest_url) {
+    sourceDisabled.value = true;
+    typeDisabled.value = true;
+    selectedType.value = "题解";
+    postSource.value = (route.query.contest_url ?? '') as string;
+    postTitle.value = (route.query.contest_title ?? '') as string;
+  }
 })
 
 
