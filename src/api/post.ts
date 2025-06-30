@@ -94,6 +94,7 @@ export const get_page_post = (data : {
     page: number
     by : string
     count: number
+    user_id: string
 }) => {
     return http.get('/api/post/post-page',{
         params: data
@@ -107,6 +108,16 @@ export const set_featured = (data : {post_id: string}) => {
 export const get_diary_list = (data : {user_id: string}) => {
     console.log(data)
     return http.get(`/api/post/diary-list`,{
+        params: data
+    })
+}
+
+export const search_post = (data : {
+    keyword: string
+    page: number
+    count: number
+}) => {
+    return http.get('/api/post/search',{
         params: data
     })
 }

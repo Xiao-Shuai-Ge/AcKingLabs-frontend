@@ -278,6 +278,8 @@ const SaveCourseSetting = async () => {
     }
   }
   CourseDialogVisible.value = false
+  // 设置成功后刷新token
+
 }
 
 </script>

@@ -28,12 +28,39 @@
       </div>
       <h1 class="text-3xl font-bold mb-8" :class = GetTextColor(userInfo.level) >{{ userInfo.username }}</h1>
 
+      <div class="w-full m-2 flex justify-end">
+        <div v-if="editMode">
+          <el-button
+              plain
+              @click="editMode = false"
+          >取消</el-button>
+          <el-button
+              type="success"
+              plain
+              @click="saveUserInfo"
+          >
+            保存
+          </el-button>
+        </div>
+        <div v-else>
+          <el-button
+              type="primary"
+              @click="openEditMode()"
+              plain
+          >编辑</el-button>
+        </div>
+      </div>
       <!-- 个人详细信息卡片 -->
       <div
           class="w-full bg-white border-2 border-gray-800 rounded-lg p-6 shadow-lg"
       >
         <div class="mb-6">
-          <p class="text-sm text-gray-600 mb-1">经验值</p>
+          <div class="flex">
+            <p class="text-sm text-gray-600 mb-1">经验值(目前身份：</p>
+            <p class="text-sm mb-1" :class = GetTextColor(userInfo.level)>{{GetRoleName(userInfo.level)}}</p>
+            <p class="text-sm text-gray-600 mb-1">)</p>
+          </div>
+
           <div class="w-full bg-gray-200 rounded-full h-4">
             <div
                 class="h-4 rounded-full"
@@ -50,26 +77,84 @@
           <div class="flex flex-col space-y-4">
             <div>
               <p class="text-sm text-gray-600">真实姓名</p>
-              <p class="font-medium">{{ userInfo.realName }}</p>
+              <div v-if="editMode">
+                <el-input
+                    v-model="editForm.realName"
+                    placeholder="请输入真实姓名"
+                    maxlength="10"
+                    minlength="2"
+                ></el-input>
+                <div v-show="editForm.realName.length < 2" class="text-sm text-red-500">姓名长度必须在2-10个字符之间！</div>
+              </div>
+              <div v-else>
+                <p class="font-medium">{{ userInfo.realName }}</p>
+              </div>
             </div>
             <div>
               <p class="text-sm text-gray-600">年级</p>
-              <p class="font-medium">{{ userInfo.grade }}</p>
+              <div v-if="editMode">
+                <el-input-number
+                    v-model="editForm.grade"
+                    :min="20"
+                    :max="99"
+                    controls-position="right"
+                    size="large"
+                    placeholder="请输入年级(例如:23)"
+                />
+              </div>
+              <div v-else>
+                <p class="font-medium">{{ userInfo.grade }}</p>
+              </div>
             </div>
             <div>
               <p class="text-sm text-gray-600">学号</p>
-              <p class="font-medium">{{ userInfo.studentId }}</p>
+              <div v-if="editMode">
+                <el-input
+                    v-model="editForm.studentId"
+                    placeholder="请输入真实姓名"
+                    maxlength="20"
+                    minlength="0"
+                ></el-input>
+              </div>
+              <div v-else>
+                <p class="font-medium">{{ userInfo.studentId }}</p>
+              </div>
+            </div>
+            <div v-if="isSuperAdmin && editMode">
+              <p class="text-sm text-gray-600">用户身份</p>
+              <el-select
+                  v-model="editForm.role"
+                  placeholder="Select"
+                  size="large"
+                  style="width: 240px"
+              >
+                <el-option
+                    v-for="item in roleOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                />
+              </el-select>
             </div>
           </div>
           <div class="flex flex-col space-y-4">
             <div>
               <p class="text-sm text-gray-600">Codeforces ID</p>
-              <a
-                  :href="`https://codeforces.com/profile/${userInfo.codeforcesId}`"
-                  target="_blank"
-                  class="font-medium text-blue-600 hover:underline cursor-pointer"
-              >{{ userInfo.codeforcesId }}</a
-              >
+              <div v-if="editMode">
+                <el-input
+                    v-model="editForm.codeforcesId"
+                    placeholder="请输入你的Codeforces ID"
+                    maxlength="30"
+                    minlength="0"
+                ></el-input>
+              </div>
+              <div v-else>
+                <a
+                    :href="`https://codeforces.com/profile/${userInfo.codeforcesId}`"
+                    target="_blank"
+                    class="font-medium text-blue-600 hover:underline cursor-pointer"
+                >{{ userInfo.codeforcesId }}</a>
+              </div>
             </div>
             <div>
               <p class="text-sm text-gray-600">Codeforces Rating</p>
@@ -89,7 +174,7 @@
           <button
               v-for="tab in tabs"
               :key="tab.id"
-              @click="activeTab = tab.id"
+              @click="SelectionTab(tab.id)"
               :class="[
               'px-6 py-3 font-medium cursor-pointer whitespace-nowrap',
               activeTab === tab.id ? 'bg-gray-800 text-white' : 'bg-white text-gray-800 hover:bg-gray-100'
@@ -100,68 +185,67 @@
         </div>
       </div>
 
-      <!-- 打卡周记列表 -->
-      <div v-if="activeTab === 'weeklyReports'" class="space-y-4">
+      <!-- 帖子列表 -->
+      <div class="flex flex-col gap-3">
         <div
-            v-if="weeklyReports.length === 0"
-            class="text-center py-10 text-gray-500"
+            v-for="(post, index) in Posts"
+            :key="index"
+            class="animation-delay bg-white border-2 border-gray-800 rounded-lg p-2 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer"
+            @click="navigateToPost(post.ID)"
+            :style="{ animationDelay: `${index * 0.1}s` }"
         >
-          暂无打卡周记
-        </div>
-        <div
-            v-for="report in weeklyReports"
-            :key="report.id"
-            class="border-2 border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow duration-300 cursor-pointer"
-        >
-          <div class="flex justify-between items-start mb-2">
-            <h3 class="text-lg font-semibold">{{ report.title }}</h3>
-            <span class="text-sm text-gray-500">{{ report.date }}</span>
+          <div class="flex items-center mb-2">
+            <img
+                :src="post.AuthorAvatar"
+                :alt="`${post.AuthorName}的头像`"
+                class="w-6 h-6 rounded-full object-cover object-top border-2 border-gray-800"
+            />
+            <div class="ml-2">
+              <h3 class="font-bold text-base" :class="GetTextColor(post.AuthorLevel)">{{ post.AuthorName }}</h3>
+            </div>
           </div>
-          <p class="text-gray-700 line-clamp-2">{{ report.content }}</p>
-        </div>
-        <div v-if="weeklyReports.length > 0" class="mt-6 flex justify-center">
-          <button
-              class="px-4 py-2 border-2 border-gray-800 text-gray-800 font-medium rounded hover:bg-gray-100 cursor-pointer whitespace-nowrap !rounded-button"
-          >
-            加载更多
-          </button>
+
+          <div class="mt-2 mb-2 flex items-center gap-2">
+            <span class="text-2xl font-bold"> {{ post.Title }} </span>
+            <span class="border-2 rounded-md px-1 text-sm" :class="post.TypeColor"> {{post.TypeName}} </span>
+            <span v-if="post.IsPrivate" class="text-blue-500 border-2 border-blue-500 rounded-md px-1 text-sm">私密</span>
+            <span v-if="post.IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
+            <span v-if="post.IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md px-1 text-sm">管理推荐</span>
+          </div>
+
+          <p class="text-gray-400 mb-4 whitespace-pre-line text-ellipsis line-clamp-1 text-sm">
+            {{ post.Content }}
+          </p>
+
+          <div class="flex items-center text-gray-500 text-sm">
+            <div class="flex items-center mr-6">
+              <i class="far fa-heart mr-1"
+                 :class="{
+                'text-red-500 fas': post.IsLiked,
+                'text-gary-500 far': !post.IsLiked
+              }"
+              ></i>
+              <span>{{ post.Likes }}</span>
+            </div>
+            <div class="flex items-center">
+              <i class="far fa-comment mr-1"></i>
+              <span>{{ post.Comments }}</span>
+            </div>
+            <div class="flex items-center ml-auto">
+              <p class="text-sm text-gray-500">{{ post.PublishDate }}</p>
+            </div>
+          </div>
         </div>
       </div>
-
-      <!-- 帖子列表 -->
-      <div v-if="activeTab === 'posts'" class="space-y-4">
-        <div v-if="posts.length === 0" class="text-center py-10 text-gray-500">
-          暂无帖子
-        </div>
-        <div
-            v-for="post in posts"
-            :key="post.id"
-            class="border-2 border-gray-300 rounded-lg p-4 hover:shadow-md transition-shadow duration-300 cursor-pointer"
-        >
-          <div class="flex justify-between items-start mb-2">
-            <h3 class="text-lg font-semibold">{{ post.title }}</h3>
-            <span class="text-sm text-gray-500">{{ post.date }}</span>
-          </div>
-          <p class="text-gray-700 line-clamp-2">{{ post.content }}</p>
-          <div class="flex items-center mt-3 text-sm text-gray-500">
-            <span class="flex items-center mr-4">
-              <i class="far fa-eye mr-1"></i> {{ post.views }}
-            </span>
-            <span class="flex items-center mr-4">
-              <i class="far fa-comment mr-1"></i> {{ post.comments }}
-            </span>
-            <span class="flex items-center">
-              <i class="far fa-thumbs-up mr-1"></i> {{ post.likes }}
-            </span>
-          </div>
-        </div>
-        <div v-if="posts.length > 0" class="mt-6 flex justify-center">
-          <button
-              class="px-4 py-2 border-2 border-gray-800 text-gray-800 font-medium rounded hover:bg-gray-100 cursor-pointer whitespace-nowrap !rounded-button"
-          >
-            加载更多
-          </button>
-        </div>
+      <!-- 分页 -->
+      <div class="mt-8 mx-auto flex justify-center">
+        <el-pagination
+            :page-size="postsPerPage"
+            :total="totalPages*postsPerPage"
+            :pager-count="11"
+            layout="prev, pager, next"
+            @current-change="handlePageChange"
+        />
       </div>
     </div>
 
@@ -187,7 +271,7 @@
         <form>
           <div class="mb-6 flex flex-col items-center">
             <div
-                class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-800 mb-2 relative group"
+                class="w-48 h-48 rounded-full overflow-hidden border-2 border-gray-800 mb-2 relative group"
             >
               <img
                   :src="editForm.avatarUrl"
@@ -230,87 +314,6 @@
                   @change="handleFileUpload"
               >
             </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-              >昵称*(必填)</label
-              >
-              <input
-                  v-model="editForm.username"
-                  type="text"
-                  class="w-full px-3 py-2 border-2  rounded-md focus:outline-none "
-                  :class = "{
-                     'border-red-500':DisabledUsername,
-                     'border-gray-300 focus:border-gray-800':!DisabledUsername,
-                  }"
-                  maxlength="30"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-              >真实姓名*(必填)</label
-              >
-              <input
-                  v-model="editForm.realName"
-                  type="text"
-                  class="w-full px-3 py-2 border-2  rounded-md focus:outline-none "
-                  :class = "{
-                     'border-red-500':DisabledRealname,
-                     'border-gray-300 focus:border-gray-800':!DisabledRealname,
-                  }"
-                  maxlength="20"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-              >年级</label
-              >
-              <input
-                  v-model="editForm.grade"
-                  type="number"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
-                  @input="limitNumberLength"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-              >学号</label
-              >
-              <input
-                  v-model="editForm.studentId"
-                  type="text"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
-                  maxlength="20"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1"
-              >Codeforces ID</label
-              >
-              <input
-                  v-model="editForm.codeforcesId"
-                  type="text"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
-                  maxlength="30"
-              />
-            </div>
-
-            <div v-if="isSuperAdmin">
-              <label class="block text-sm font-medium text-gray-700 mb-1">用户身份</label>
-              <select
-                  v-model="editForm.role"
-                  class="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:border-gray-800"
-              >
-                <option :value="0">游客</option>
-                <option :value="1">普通成员</option>
-                <option :value="2">正式成员</option>
-                <option :value="3">管理员</option>
-              </select>
-            </div>
           </div>
 
           <div class="mt-8 flex justify-end space-x-4">
@@ -322,7 +325,7 @@
               取消
             </button>
             <button
-                type="submit"
+                type="button"
                 class="px-4 py-2 text-white rounded-md  cursor-pointer whitespace-nowrap !rounded-button"
                 :disabled = "DisabledSaveButton"
                 :class = "{'bg-gray-300':DisabledSaveButton, 'bg-gray-800 hover:bg-gray-700':!DisabledSaveButton}"
@@ -340,19 +343,47 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted, watch} from "vue";
 import Header from "@/components/Header.vue";
-import {get_user_profile, set_profile,set_role} from "@/api/user";
+import {get_user_info, get_user_profile, set_profile, set_role} from "@/api/user";
 import {useRoute} from "vue-router";
-import {CheckLevel, GetTextColor, GetBgColor, NextLevelLimit} from "@/utils/level";
+import {CheckLevel, GetTextColor, GetBgColor, GetRoleName, NextLevelLimit} from "@/utils/level";
 import {useUserStore} from "@/store/user";
 
 // 使用信息框
 import { useMessage } from '@/store/message'
 import router from "@/router";
 import {upload_image} from "@/api/file";
+import {refreshToken} from "@/api/auth";
+import {get_like_post, get_page_post, search_post} from "@/api/post";
+import {TimestampFormat} from "@/utils/week";
+import {PostTypeToColor, PostTypeToName} from "@/utils/post";
 const { addMessage } = useMessage()
 
-// 登录信息
-const UserStore = useUserStore();
+// 用户信息缓存--------------------------------------------------------
+let UserMap = new Map();
+
+interface UserInfo {
+  username: string;
+  avatar: string;
+  role : number;
+  xp : number;
+  level : number;
+}
+
+const getUserInfo = async (id : string) : Promise<UserInfo> => {
+  let data = UserMap.get(id)
+  if (!data) {
+    // 不存在，异步请求用户信息
+    const resp = await get_user_info({id:id})
+    data = resp.data.data
+    data.level = CheckLevel(data.xp,data.role);
+    UserMap.set(id, data)
+    console.log("缓存用户信息",data)
+  }
+  return data
+}
+//-------------------------------------------------------------------
+
+const UserStore = useUserStore()
 
 // 用户信息
 const userInfo = ref({
@@ -432,6 +463,8 @@ const LoadUserInfo = async () => {
   addMessage('加载成功', 'success')
 }
 
+const editMode = ref(false)
+
 // 判断是否可以编辑
 const isCanEdit = computed(() => {
   if (UserStore.isLogin()) {
@@ -462,18 +495,110 @@ const format = (s:string) => {
 
 // 标签页
 const tabs = [
-  { id: "weeklyReports", name: "打卡周记" },
-  { id: "posts", name: "帖子" },
+  { id: "diary", name: "打卡周记" },
+  { id: "post", name: "帖子" },
 ];
-const activeTab = ref("weeklyReports");
+const activeTab = ref("diary");
 
-// 打卡周记数据
-const weeklyReports = ref([
-]);
+const SelectionTab = (id : string) => {
+    activeTab.value = id;
+    currentPage.value = 1;
+    LoadPosts();
+}
 
-// 帖子数据
-const posts = ref([
-]);
+
+// 分页相关
+const currentPage = ref(1);
+const postsPerPage = ref(3);
+const totalPages = ref(1);
+
+const IsLoading = ref(false);
+const Posts = ref<any[]>([]);
+
+const PostMAP = new Map<string,boolean>();
+
+onMounted(async () => {
+  await LoadPosts();
+})
+
+
+// 加载帖子列表
+const LoadTime = ref(0);
+const LoadPosts = async () => {
+  Posts.value = [];
+  LoadTime.value = new Date().getTime();
+  const NowLoadTime = LoadTime.value;
+
+  let data;
+  data = await get_page_post({
+    type: activeTab.value,
+    source: "",
+    page : currentPage.value,
+    by : "user",
+    user_id : String(route.params.id),
+    count : postsPerPage.value,
+  })
+  console.log(data)
+  if (data.data.data.length > 0) {
+    // 循环加入帖子列表
+    for (const post of data.data.data.posts) {
+      console.log(post);
+      PostMAP.set(post.id, true);
+      const Author = await getUserInfo(post.user_id);
+      const isLiked = await get_like_post({post_id: post.id});
+      if (LoadTime.value != NowLoadTime) {
+        // 不再加载此次数据，退出循环
+        break;
+      }
+      //console.log(isLiked);
+      Posts.value.push({
+        ID: post.id,
+        AuthorID: post.user_id,
+        AuthorName: Author.username,
+        AuthorAvatar: Author.avatar,
+        AuthorXp: Author.xp,
+        AuthorLevel: Author.level,
+        PublishTime: post.created_at,
+        PublishDate: TimestampFormat(new Date(post.created_at)),
+
+        TypeColor: PostTypeToColor(post.type),
+        TypeName: PostTypeToName(post.type),
+        Title: post.title,
+        Content: post.content_short,
+        Likes: post.likes,
+        Comments: post.comments,
+
+        IsAdminLike: post.is_admin_like,
+        IsFeatured: post.is_featured,
+        IsPrivate: post.is_private,
+
+        IsLiked: isLiked.data.data.is_like,
+        Source: post.source,
+        Weight: post.weight,
+      });
+    }
+  }
+  totalPages.value = data.data.data.page_total
+  IsLoading.value = false;
+}
+
+// 处理分页
+const handlePageChange = (val: number) => {
+  currentPage.value = val;
+  Posts.value = []; // 清空帖子列表
+  LoadPosts(); // 重新加载帖子列表
+  console.log("当前页码:", currentPage.value);
+};
+
+const navigateTo = (url : string) => {
+  router.push(url);
+};
+
+// 跳转到帖子详情页面
+const navigateToPost = (id : string) => {
+  router.push('/learn/'+id);
+};
+
 
 // 编辑表单
 const showEditModal = ref(false);
@@ -486,6 +611,11 @@ const editForm = ref({
   codeforcesId: "",
   role: 0,
 });
+
+const openEditMode = () => {
+  editForm.value = { ...userInfo.value };
+  editMode.value = true;
+}
 
 // 打开编辑弹窗
 const openEditModal = () => {
@@ -500,6 +630,7 @@ const closeEditModal = () => {
 
 // 保存用户信息
 const saveUserInfo = async () => {
+  console.log("保存用户信息");
   // 修改 role
   if (userInfo.value.role != editForm.value.role) {
     const data2 = await set_role({id: String(route.params.id), role: editForm.value.role});
@@ -515,6 +646,7 @@ const saveUserInfo = async () => {
     student_no: editForm.value.studentId,
     codeforces_id: editForm.value.codeforcesId,
   })
+  console.log(data.data);
   if (data.data.code != 20000) {
     addMessage('保存失败', 'error')
     return;
@@ -522,14 +654,9 @@ const saveUserInfo = async () => {
   addMessage('保存成功','success')
 
   console.log("修改用户请求:",data);
-  if (UserStore.getUserInfo().role == 0) {
-    // 权限更改，需要重新登录
-    UserStore.logout();
-    addMessage('身份发生变化，请重新登录','info')
-    setTimeout(() => {
-      router.push("/login");
-    },1000)
-  }
+  editMode.value = false;
+  // 刷新token
+  await refreshToken()
 
   // userInfo.value = { ...userInfo.value, ...editForm.value };
   // 刷新页面
@@ -643,6 +770,14 @@ const handleFileUpload = async (event: Event) => {
   }
 };
 
+const roleOptions = [
+    { value: 0, label: "普通用户" },
+    { value: 1, label: "普通成员" },
+    { value: 2, label: "正式成员" },
+    { value: 3, label: "管理员" },
+    { value: 4, label: "超级管理员" }
+]
+
 </script>
 
 <style scoped>
@@ -658,6 +793,28 @@ const handleFileUpload = async (event: Event) => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.floating-component {
+  position: fixed; /* 固定位置 */
+  bottom: 5%; /* 下边距 */
+  right: 5%; /* 右边距 */
+  z-index: 10000; /* 设置 z-index 确保悬浮在顶层 */
+}
+
+.animation-delay {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }
 

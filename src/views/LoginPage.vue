@@ -359,6 +359,7 @@ const handleRegister = async () => {
     return
   }
   UserStore.setAtoken(data.data.data.atoken)
+  UserStore.setRtoken(data.data.data.rtoken)
   // 跳转到主页
   window.location.href = '/'
 };

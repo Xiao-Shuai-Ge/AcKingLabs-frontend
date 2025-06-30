@@ -79,3 +79,26 @@ export const GetTextColor = (level : number) => {
             return "text-gray-500";
     }
 }
+
+export const GetRoleName = (level : number) => {
+    switch (level) {
+        case 0:
+            return "未实名游客";
+        case 1:
+            return "新人";
+        case 2:
+            return "普通用户";
+        case 3:
+            return "活跃用户";
+        case 4:
+            return "资深用户";
+        case 5:
+            return "主力成员";
+        case 6:
+            return "传奇成员";
+        case 7:
+            return "管理员";
+        default:
+            return "未实名游客";
+    }
+}

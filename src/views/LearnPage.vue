@@ -5,6 +5,28 @@
     <div class="container mx-auto px-4 py-8 max-w-4xl">
       <!-- 筛选区域 -->
       <div class="mb-8 bg-white p-6 rounded-lg shadow-md ">
+        <!-- 搜索栏 -->
+        <div class="mb-4">
+          <h3 class="text-sm font-medium text-gray-500 mb-3">搜索
+            <span class="text-xs text-gray-400">(不支持类型筛选和排序方式)</span>
+          </h3>
+          <div class="flex">
+            <el-input
+                v-model="input"
+                style="width: 240px"
+                placeholder="请输入要搜索的关键词"
+                :prefix-icon="Search"
+            />
+            <el-button
+                class="ml-2"
+                type="primary"
+                @click="search"
+            >搜索</el-button>
+          </div>
+
+
+        </div>
+
         <!-- 帖子类型筛选 -->
         <div class="mb-4">
           <h3 class="text-sm font-medium text-gray-500 mb-3">帖子类型</h3>
@@ -123,9 +145,10 @@ import router from "@/router";
 import {CheckLevel, GetTextColor} from "@/utils/level";
 import {get_user_info} from "@/api/user";
 import {useUserStore} from "@/store/user";
-import {get_like_post, get_more_post, get_page_post} from "@/api/post";
+import {get_like_post, get_more_post, get_page_post, search_post} from "@/api/post";
 import {GetWeekCode, TimestampFormat} from "@/utils/week";
 import {PostTypeToColor, PostTypeToName} from "@/utils/post";
+import {Search} from "@element-plus/icons-vue";
 
 // 用户信息缓存--------------------------------------------------------
 let UserMap = new Map();
@@ -153,6 +176,21 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
 //-------------------------------------------------------------------
 
 const UserStore = useUserStore()
+
+// 搜索输入框
+const input = ref("");
+
+const search = () => {
+  // 初始化帖子类型 和 排序方式
+  selectedPostType.value = "post";
+  selectedSortOption.value = "popular";
+  // 重置分页
+  currentPage.value = 1;
+  // 清空帖子列表
+  Posts.value = [];
+
+  LoadPosts(); // 重新加载帖子列表
+}
 
 // 帖子类型
 const postTypes = [
@@ -194,13 +232,22 @@ const LoadPosts = async () => {
   LoadTime.value = new Date().getTime();
   const NowLoadTime = LoadTime.value;
 
-  const data = await get_page_post({
-    type: selectedPostType.value,
-    source: "",
-    page : currentPage.value,
-    by : selectedSortOption.value,
-    count : postsPerPage.value,
-  })
+  let data;
+  if (input.value.length == 0) {
+    data = await get_page_post({
+      type: selectedPostType.value,
+      source: "",
+      page : currentPage.value,
+      by : selectedSortOption.value,
+      count : postsPerPage.value,
+    })
+  } else {
+    data = await search_post({
+      keyword: input.value,
+      page : currentPage.value,
+      count : postsPerPage.value,
+    })
+  }
   console.log(data)
   if (data.data.data.length > 0) {
     // 循环加入帖子列表
@@ -248,6 +295,7 @@ const LoadPosts = async () => {
 // 选择帖子类型
 const selectPostType = (typeId: string) => {
   selectedPostType.value = typeId;
+  input.value = ""; // 清空搜索框
   currentPage.value = 1; // 重置到第一页
   Posts.value = []; // 清空帖子列表
   LoadPosts(); // 重新加载帖子列表
@@ -256,6 +304,7 @@ const selectPostType = (typeId: string) => {
 // 选择排序方式
 const selectSortOption = (sortId: string) => {
   selectedSortOption.value = sortId;
+  input.value = ""; // 清空搜索框
   currentPage.value = 1; // 重置到第一页
   Posts.value = []; // 清空帖子列表
   LoadPosts(); // 重新加载帖子列表
