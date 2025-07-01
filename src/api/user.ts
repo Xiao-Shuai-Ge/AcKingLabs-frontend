@@ -35,3 +35,9 @@ export const set_profile = (data:{
 export const set_role = (data:{ id: string, role: number }) => {
     return http.post('/api/user/role',data)
 }
+
+export const get_rankings = (data:{ page: number, count: number }) => {
+    return http.get('/api/user/rankings', {
+        params: data
+    })
+}

@@ -1,15 +1,11 @@
 <template>
   <Header/>
   <div
-      class="min-h-screen flex flex-col items-center bg-gray-50 px-4 pt-32"
+      class="min-h-screen flex flex-col items-center bg-gray-50 px-4 pt-32 space-y-4"
   >
     <div v-for="(page, index) in pages"
          :key="index"
-         class="max-w-5xl w-full flex bg-white rounded-lg p-6 transition-all duration-1500 border border-gray-200 shadow-md hover:shadow-xl cursor-pointer"
-         :class="{
-           'opacity-100 translate-y-0': page.animationStarted,
-           'opacity-0 translate-y-8': !page.animationStarted
-         }"
+         class="animation-delay max-w-5xl w-full flex bg-white rounded-lg p-6 transition-all duration-1500 border border-gray-200 shadow-md hover:shadow-xl cursor-pointer"
          @click="navigateTo(page.path)"
     >
       <i :class="page.icon" class="text-6xl m-2 mr-5"></i>
@@ -30,6 +26,13 @@ import router from "@/router";
 
 const pages = ref([
   {
+    icon: "fa-solid fa-ranking-star",
+    title: "排行榜",
+    description: "查看网站所有用户的经验排名",
+    path: "/more/rankings",
+    animationStarted: false,
+  },
+  {
     icon: "fa-solid fa-user-group",
     title: "关于我们",
     description: "关于 AcKing 实验室的贡献成员",
@@ -43,7 +46,7 @@ onMounted(() => {
     setTimeout(() => {
       pages.value[i].animationStarted = true
       console.log(pages.value[i].animationStarted)
-    },i*300+100)
+    },i*100+200)
   }
 })
 
@@ -52,3 +55,20 @@ const navigateTo = (path: string) => {
 }
 
 </script>
+
+<style scoped>
+.animation-delay {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+</style>
