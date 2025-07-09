@@ -131,7 +131,7 @@
           </button>
           <button
               @click="saveDraft"
-              :disabled="saveDisabled"
+              :disabled="saveDraftDisabled"
               class="border border-gray-300 px-6 py-3 rounded-button hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
 
           >
@@ -233,8 +233,16 @@ const titleDisabled = ref(true);
 const sourceDisabled = ref(true);
 const typeDisabled = ref(true);
 
+const diaryDisabled = ref(false);
+
 onMounted(()=>{
   // 根据周记和帖子进行初始化
+  if (isDiary.value) {
+    postContent.value = localStorage.getItem("draft-diary-content") || "";
+  } else {
+    postContent.value = localStorage.getItem("draft-post-content") || "";
+  }
+
   if (isDiary.value) {
     // 自动识别当前是第几周
     let date = new Date();
@@ -243,7 +251,10 @@ onMounted(()=>{
     postSource.value = GetWeekCode(date).name;
     postTitle.value = GetWeekCode(date).name+" 学习周记"
 
-    postContent.value = localStorage.getItem("draft-diary-content") || "";
+    if (GetWeekCode(date).code.length == 0) {
+      diaryDisabled.value = true;
+    }
+
   } else {
     selectedType.value = "教程";
     postTypes = ["教程", "题解","比赛","闲聊"];
@@ -295,6 +306,13 @@ const selectType = (type: string) => {
 };
 
 const saveDisabled = computed(() => {
+  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 20000 || diaryDisabled.value) {
+    return true;
+  }
+  return false;
+})
+
+const saveDraftDisabled = computed(() => {
   if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 20000) {
     return true;
   }
@@ -335,7 +353,11 @@ const publishPost = async () => {
 const saveDraft = () => {
   //alert("草稿已保存到本地！");
   // 这里可以添加实际的保存草稿逻辑
-  localStorage.setItem("draft-diary-content",postContent.value);
+  if (isDiary.value) {
+    localStorage.setItem("draft-diary-content",postContent.value);
+  } else {
+    localStorage.setItem("draft-post-content",postContent.value);
+  }
   addMessage('草稿已保存到本地！', 'success')
 };
 </script>

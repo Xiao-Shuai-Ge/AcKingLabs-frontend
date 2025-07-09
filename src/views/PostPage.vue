@@ -166,7 +166,7 @@
                 </div>
 
 <!--                <p class="text-gray-800 mb-3">{{ comment.Content }}</p>-->
-                <div class="flex items-center">
+                <div class="flex flex-wrap">
                   <button
                       @click="ClickCommentLike(comment)"
                       :disabled="comment.LikedDisabled"
@@ -185,6 +185,13 @@
                       href="#targetLocation"
                   >
                     回复
+                  </a>
+                  <a
+                      v-if="comment.AuthorID == UserStore.getUserInfo().user_id || UserStore.getUserInfo().role >= 3"
+                      class="ml-4 text-red-500 hover:underline cursor-pointer"
+                      @click="DeleteComment(comment,comment.ID)"
+                  >
+                    删除
                   </a>
                 </div>
               </div>
@@ -222,6 +229,13 @@
                       ></i>
                       <span class="ml-1">{{ childComment.Likes }}</span>
                     </button>
+                    <a
+                        v-if="childComment.AuthorID == UserStore.getUserInfo().user_id || UserStore.getUserInfo().role >= 3"
+                        class="ml-auto text-red-500 hover:underline cursor-pointer"
+                        @click="DeleteComment(comment,childComment.ID)"
+                    >
+                      删除
+                    </a>
                   </div>
                 </div>
               </div>
@@ -252,7 +266,7 @@ import {computed, onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
 import {get_user_info} from "@/api/user";
 import {
-  create_comment,
+  create_comment, delete_comment,
   get_like_comment,
   get_like_post,
   get_more_comment,
@@ -586,6 +600,21 @@ const CreateComment = async () => {
 
 const ReplyComment = async (comment : comment) => {
   CommentTo.value = comment
+}
+
+const DeleteComment = async (comment: comment,comment_id : string) => {
+  const data = await delete_comment({
+    comment_id: comment_id,
+  })
+  if (data.data.code != 20000) {
+    addMessage('删除失败', 'error')
+    return
+  }
+  addMessage('删除成功', 'success')
+  // 刷新评论
+  Comments.value = Comments.value.filter(item => item.ID != comment_id)
+  comment.ChildComments = comment.ChildComments.filter(item => item.ID != comment_id)
+  CommentMAP.delete(comment_id)
 }
 
 

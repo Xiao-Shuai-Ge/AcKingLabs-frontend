@@ -170,6 +170,7 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
 const UserStore = useUserStore()
 
 const WeekDisplayTime = ref(0);
+const FirstWeekDisplayTime = ref(0);
 
 const DiaryMap = new Map();
 
@@ -192,6 +193,7 @@ onMounted(async () => {
   for (const diary of data2.data.data.posts) {
     DiaryMap.set(diary.source, diary.post_id)
   }
+  FirstWeekDisplayTime.value = WeekDisplayTime.value;
   // 刷新按钮
   RefreshButton()
 })
@@ -217,9 +219,15 @@ const RefreshButton = () => {
   const date = new Date();
   const weekcode = GetWeekCode(new Date(WeekDisplayTime.value)).code;
   if (date < data.from) {
-    ButtonText.value = "未到时间";
-    ButtonIcon.value = "far fa-clock text-xl";
-    ButtonClass.value = "bg-gray-500 hover:bg-gray-400";
+    if (WeekDisplayTime.value == FirstWeekDisplayTime.value) {
+      ButtonText.value = "编辑草稿";
+      ButtonIcon.value = "far fa-pen-to-square text-xl";
+      ButtonClass.value = "bg-gray-800 hover:bg-gray-700";
+    } else {
+      ButtonText.value = "未到时间";
+      ButtonIcon.value = "far fa-clock text-xl";
+      ButtonClass.value = "bg-gray-500 hover:bg-gray-400";
+    }
   } else if (date > data.to) {
     if (DiaryMap.has(weekcode)) {
       ButtonText.value = "已提交";
@@ -251,7 +259,7 @@ const ClickButtion = () => {
   // 已提交，可以查看
   if (DiaryMap.has(weekcode)) {
     router.push(`/diary/`+DiaryMap.get(weekcode));
-  } else if (date >= data.from && date <= data.to) {
+  } else if (date >= data.from && date <= data.to || WeekDisplayTime.value == FirstWeekDisplayTime.value) {
     router.push('/diary/create');
   }
 };

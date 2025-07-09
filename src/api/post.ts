@@ -121,3 +121,7 @@ export const search_post = (data : {
         params: data
     })
 }
+
+export const delete_comment = (data : {comment_id: string}) => {
+    return http.post(`/api/post/delete-comment`,data)
+}

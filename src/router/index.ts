@@ -90,6 +90,11 @@ const routes = [
         component: () => import('../views/RankingsPage.vue')
     },
     {
+        path: '/more/chatroom',
+        name: 'ChatRoom',
+        component: () => import('../views/ChatRoomPage.vue')
+    },
+    {
         path: '/more/ulearning',
         name: 'Ulearning',
         component: () => import('../views/Ulearning.vue')

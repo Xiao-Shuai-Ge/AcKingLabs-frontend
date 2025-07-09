@@ -7,6 +7,10 @@ import router from "@/router/index.js";
 import { createPinia } from "pinia";
 const pinia = createPinia();
 
+//import websocket from 'vue-native-websocket'
+//import websocket from 'vue-socket.io-next'
+
+
 import VMdEditor from '@kangc/v-md-editor';
 import VMdPreview from '@kangc/v-md-editor/lib/preview';
 import '@kangc/v-md-editor/lib/style/base-editor.css';
@@ -22,6 +26,7 @@ import 'katex/dist/katex.css' // 引入 KaTeX 的样式
 
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import {config} from "@/config.js";
 
 const KatexPlugin = createKatexPlugin({ katex });
 
@@ -35,10 +40,14 @@ VMdPreview.use(githubTheme, {
 });
 VMdPreview.use(KatexPlugin)
 
-createApp(App)
-    .use(VMdEditor)
+const app = createApp(App)
+
+app.use(VMdEditor)
     .use(VMdPreview)
     .use(router)
     .use(pinia)
     .use(ElementPlus)
-    .mount('#app')
+    //.use(websocket, config.BACKEND_URL+"/ws?token="+"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGFzcyI6ImF0b2tlbiIsImV4cCI6MTc1MjA0MzU4NSwicm9sZSI6NCwidXNlcmlkIjoiMTkwODkyNzI5NTQ2MTAwMzI2NCIsInVzZXJuYW1lIjoi5bCP5biF5ZOlIn0.mRdw_2dTl363k6TU8V-6e3s5vUCXoH23DOe5CdiUqd0")
+
+
+app.mount('#app')

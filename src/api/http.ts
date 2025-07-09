@@ -1,10 +1,14 @@
 import axios, {AxiosError} from 'axios'
 import {useUserStore} from "@/store/user";
+import { config } from '@/config.js'
+
+console.log("config.BACKEND_URL", config.BACKEND_URL)
 
 // 创建axios实例
 const http = axios.create({
-    baseURL: "http://localhost:8080",
+    baseURL: config.BACKEND_URL,
     //baseURL: "http://120.79.250.47:8080",
+    //baseURL: "http://localhost:8080",
     timeout: 20000
 })
 
