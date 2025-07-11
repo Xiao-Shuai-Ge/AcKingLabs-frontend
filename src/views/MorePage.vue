@@ -26,6 +26,13 @@ import router from "@/router";
 
 const pages = ref([
   {
+    icon: "fa-solid fa-comments",
+    title: "聊天室",
+    description: "来和群u吹水吧",
+    path: "/more/chatroom",
+    animationStarted: false,
+  },
+  {
     icon: "fa-solid fa-ranking-star",
     title: "排行榜",
     description: "查看网站所有用户的经验排名",
