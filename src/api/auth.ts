@@ -5,7 +5,7 @@ export const login = (data : {email: string, password : string , is_remember : b
     return http.post('/api/login/login', data)
 }
 
-export const register = (data : {email: string, password: string, username: string , code : string}) => {
+export const register = (data : {email: string, password: string, username: string , code : string, invitation_code : string}) => {
     return http.post('/api/login/register', data)
 }
 

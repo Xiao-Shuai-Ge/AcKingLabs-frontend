@@ -1,13 +1,19 @@
 <template>
-  <div class="progress-container">
-    <div class="progress-background"></div>
+  <div
+      class="progress-container relative w-full overflow-hidden rounded-full"
+      :style="{ height: `${height}px` }"
+  >
+    <div class="progress-background absolute top-0 left-0 w-full h-full bg-gray-600 z-[0] rounded-full"></div>
     <div
-        class="progress-fast"
-        :style="fastProgressStyle"
+        class="progress-fast absolute top-0 left-0 h-full transition-all duration-300 ease-in-out z-[2] bg-gray-500  rounded-full"
+        :style="{ width: `${validFastPercent}%` }"
     ></div>
     <div
-        class="progress-main"
-        :style="mainProgressStyle"
+        class="progress-main absolute top-0 left-0 h-full transition-all duration-300 ease-in-out z-[3] rounded-full"
+        :class="color"
+        :style="{
+        width: `${mainPercent}%`,
+      }"
     ></div>
   </div>
 </template>
@@ -19,7 +25,7 @@ const props = defineProps({
   // 主进度条颜色
   color: {
     type: String,
-    default: '#42b883' // 默认绿色
+    default: 'bg-green-500' // Vue 经典绿色
   },
   // 主进度百分比 (0-100)
   mainPercent: {
@@ -31,53 +37,17 @@ const props = defineProps({
   fastPercent: {
     type: Number,
     default: 0,
-    validator: value => value >= 0 && value <= 100 && value >= props.mainPercent
+    validator: value => value >= 0 && value <= 100
+  },
+  // 进度条高度 (像素)
+  height: {
+    type: Number,
+    default: 5
   }
 })
 
-// 计算快速进度样式
-const fastProgressStyle = computed(() => ({
-  width: `${props.fastPercent}%`,
-  backgroundColor: '#e0e0e0' // 浅灰色
-}))
-
-// 计算主进度样式
-const mainProgressStyle = computed(() => ({
-  width: `${props.mainPercent}%`,
-  backgroundColor: props.color
-}))
+// 确保快速进度不小于主进度
+const validFastPercent = computed(() =>
+    Math.max(props.fastPercent, props.mainPercent)
+)
 </script>
-
-<style scoped>
-.progress-container {
-  position: relative;
-  width: 100%;
-  height: 12px;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.progress-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #616161; /* 深灰色背景 */
-  z-index: 0;
-}
-
-.progress-fast,
-.progress-main {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  transition: width 0.3s ease;
-  z-index: 2;
-}
-
-.progress-main {
-  z-index: 3; /* 主进度显示在最上层 */
-}
-</style>

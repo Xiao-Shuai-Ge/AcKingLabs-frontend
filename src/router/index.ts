@@ -95,6 +95,11 @@ const routes = [
         component: () => import('../views/ChatRoomPage.vue')
     },
     {
+        path: '/more/game',
+        name: 'Game',
+        component: () => import('../views/GamePage.vue')
+    },
+    {
         path: '/more/ulearning',
         name: 'Ulearning',
         component: () => import('../views/Ulearning.vue')

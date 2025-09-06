@@ -121,20 +121,77 @@
         width="500"
         align-center
     >
-      <span>精选比赛</span>
-      <el-switch
-          v-model="IsRecommend"
-          class="ml-2"
-      />
+      <div class="space-y-4">
+        <!-- 精选比赛设置 -->
+        <div class="flex items-center justify-between">
+          <span>精选比赛</span>
+          <el-switch v-model="IsRecommend" />
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="flex space-x-2 pt-4 border-t">
+          <el-button type="primary" :icon="Edit" circle @click="openEditDialog(selectedContest!)" title="编辑比赛"/>
+          <el-button type="danger" :icon="Delete" circle @click="confirmDelete(selectedContest!)" title="删除比赛"/>
+        </div>
+      </div>
 
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="centerDialogVisible = false">
-            取消
+            关闭
           </el-button>
           <el-button type="primary" @click="postContestSetting()">
-            确认
+            保存设置
           </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 编辑比赛对话框 -->
+    <el-dialog
+        v-model="editDialogVisible"
+        title="编辑比赛"
+        width="600px"
+        align-center
+    >
+      <el-form :model="editForm" label-width="100px">
+        <el-form-item label="比赛标题">
+          <el-input v-model="editForm.title" placeholder="请输入比赛标题" />
+        </el-form-item>
+        <el-form-item label="比赛时间">
+          <el-date-picker
+              v-model="editForm.dateRange"
+              type="datetimerange"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DD HH:mm:ss"
+          />
+        </el-form-item>
+        <el-form-item label="比赛链接">
+          <el-input v-model="editForm.url" placeholder="请输入比赛链接" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="editDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="updateContest" :loading="updateLoading">确认</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 删除确认对话框 -->
+    <el-dialog
+        v-model="deleteDialogVisible"
+        title="确认删除"
+        width="400px"
+        align-center
+    >
+      <p>确定要删除比赛 "{{ selectedContestForDelete?.title }}" 吗？此操作不可撤销。</p>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="deleteDialogVisible = false">取消</el-button>
+          <el-button type="danger" @click="deleteContest" :loading="deleteLoading">确认删除</el-button>
         </div>
       </template>
     </el-dialog>
@@ -144,8 +201,8 @@
 <script lang="ts" setup>
 import {ref, computed, watch, onMounted} from "vue";
 import Header from "@/components/Header.vue";
-import {get_contest_list, get_booking, create_booking, set_recommend} from "@/api/contest";
-import {Timer, Bell, ChatLineSquare, Plus, Setting} from "@element-plus/icons-vue";
+import {get_contest_list, get_booking, create_booking, set_recommend, update_contest, delete_contest} from "@/api/contest";
+import {Timer, Bell, ChatLineSquare, Plus, Setting, Edit, Delete} from "@element-plus/icons-vue";
 import router from "@/router";
 const { addMessage } = useMessage()
 
@@ -160,6 +217,21 @@ const IsAdmin = computed(() => {
     return true;
   }
 });
+
+// 编辑对话框相关
+const editDialogVisible = ref(false);
+const updateLoading = ref(false);
+const editForm = ref({
+  title: '',
+  dateRange: [] as string[],
+  url: ''
+});
+const selectedContestForEdit = ref<Contest>();
+
+// 删除对话框相关
+const deleteDialogVisible = ref(false);
+const deleteLoading = ref(false);
+const selectedContestForDelete = ref<Contest>();
 
 // 平台数据
 const platforms = [
@@ -313,9 +385,11 @@ const OpenEditForm = (contest: Contest) => {
 };
 
 const postContestSetting = async () => {
+  if (!selectedContest.value) return;
+  
   // 发送请求
   const data = await set_recommend({
-    contest_id: selectedContest.value?.id,
+    contest_id: selectedContest.value.id,
     is_recommend: IsRecommend.value,
   })
   console.log(data);
@@ -428,6 +502,87 @@ const handlePageChange = (val: number) => {
 const navigateTo = (url : string) => {
   router.push(url);
 };
+
+// 打开编辑对话框
+const openEditDialog = (contest: Contest) => {
+  selectedContestForEdit.value = contest;
+  editForm.value = {
+    title: contest.title,
+    dateRange: [
+      new Date(contest.startTime).toISOString().slice(0, 19).replace('T', ' '),
+      new Date(contest.endTime).toISOString().slice(0, 19).replace('T', ' ')
+    ],
+    url: contest.url
+  };
+  editDialogVisible.value = true;
+};
+
+// 更新比赛
+const updateContest = async () => {
+  if (!editForm.value.title.trim() || !editForm.value.url.trim() || editForm.value.dateRange.length !== 2) {
+    addMessage('请填写完整信息', 'error');
+    return;
+  }
+
+  updateLoading.value = true;
+  try {
+    const data = await update_contest({
+      contest_id: selectedContestForEdit.value!.id,
+      title: editForm.value.title,
+      start_time: new Date(editForm.value.dateRange[0]).getTime(),
+      end_time: new Date(editForm.value.dateRange[1]).getTime(),
+      url: editForm.value.url
+    });
+
+    if (data.data.code === 20000) {
+      addMessage('更新成功', 'success');
+      // 更新本地数据
+      selectedContestForEdit.value!.title = editForm.value.title;
+      selectedContestForEdit.value!.startTime = new Date(editForm.value.dateRange[0]).getTime();
+      selectedContestForEdit.value!.endTime = new Date(editForm.value.dateRange[1]).getTime();
+      selectedContestForEdit.value!.url = editForm.value.url;
+      editDialogVisible.value = false;
+    } else {
+      addMessage('更新失败', 'error');
+    }
+  } catch (error) {
+    addMessage('更新失败', 'error');
+  } finally {
+    updateLoading.value = false;
+  }
+};
+
+// 确认删除
+const confirmDelete = (contest: Contest) => {
+  selectedContestForDelete.value = contest;
+  deleteDialogVisible.value = true;
+};
+
+// 删除比赛
+const deleteContest = async () => {
+  deleteLoading.value = true;
+  try {
+    const data = await delete_contest({
+      contest_id: selectedContestForDelete.value!.id
+    });
+
+    if (data.data.code === 20000) {
+      addMessage('删除成功', 'success');
+      deleteDialogVisible.value = false;
+      // 从列表中移除已删除的比赛
+      const index = contests.value.findIndex(c => c.id === selectedContestForDelete.value!.id);
+      if (index > -1) {
+        contests.value.splice(index, 1);
+      }
+    } else {
+      addMessage('删除失败', 'error');
+    }
+  } catch (error) {
+    addMessage('删除失败', 'error');
+  } finally {
+    deleteLoading.value = false;
+  }
+};
 </script>
 
 <style scoped>
@@ -443,6 +598,7 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .floating-component {

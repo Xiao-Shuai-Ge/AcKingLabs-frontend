@@ -26,7 +26,17 @@
           </button>
         </div>
       </div>
-      <h1 class="text-3xl font-bold mb-8" :class = GetTextColor(userInfo.level) >{{ userInfo.username }}</h1>
+      <div v-if="editMode">
+        <el-input
+            v-model="editForm.username"
+            placeholder="请输入用户名"
+            maxlength="20"
+            minlength="0"
+        ></el-input>
+      </div>
+      <div v-else>
+        <h1 class="text-3xl font-bold mb-8" :class = GetTextColor(userInfo.level) >{{ userInfo.username }}</h1>
+      </div>
 
       <div class="w-full m-2 flex justify-end">
         <div v-if="editMode">
@@ -42,7 +52,7 @@
             保存
           </el-button>
         </div>
-        <div v-else>
+        <div v-else-if="isCanEdit">
           <el-button
               type="primary"
               @click="openEditMode()"

@@ -248,6 +248,28 @@ isLogin ? 'border-b-2 border-black text-gray-900' : 'text-gray-500 hover:text-gr
                   </div>
                 </div>
               </div>
+              <div class="mb-4">
+                <label
+                    for="register-email"
+                    class="block text-sm font-medium text-gray-700"
+                >内部邀请码</label
+                >
+                <div class="mt-1 relative rounded-md shadow-sm">
+                  <div
+                      class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                  >
+                    <i class="fas fa-code text-gray-400"></i>
+                  </div>
+                  <input
+                      v-model="registerForm.invitationCode"
+                      type="text"
+                      id="register-code"
+                      class="border-gray-300 focus:ring-black focus:border-black block w-full pl-10 pr-3 py-2 sm:text-sm rounded-md border"
+                      placeholder="请输入内部邀请码"
+                      required
+                  />
+                </div>
+              </div>
               <button
                   type="submit"
                   class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black !rounded-button cursor-pointer whitespace-nowrap"
@@ -289,6 +311,7 @@ const loginForm = ref({
 const registerForm = ref({
   username: "",
   email: "",
+  invitationCode: "",
   verificationCode: "",
   password: "",
   confirmPassword: "",
@@ -344,20 +367,26 @@ const handleRegister = async () => {
     password: registerForm.value.password,
     username: registerForm.value.username,
     code: registerForm.value.verificationCode,
+    invitation_code: registerForm.value.invitationCode,
   })
   console.log(data)
-  if (data.data.code === 10008) {
-    // 验证码错误
-    message.value = "验证码错误"
-    return
-  } else if (data.data.code === 10010) {
-    // 邮箱已被注册
-    message.value = "邮箱已被使用"
-    return
-  } else if (data.data.code != 20000) {
-    message.value = "发生错误"
+  if (data.data.code != 20000) {
+    message.value = data.data.message
     return
   }
+
+  // if (data.data.code === 10008) {
+  //   // 验证码错误
+  //   message.value = "验证码错误"
+  //   return
+  // } else if (data.data.code === 10010) {
+  //   // 邮箱已被注册
+  //   message.value = "邮箱已被使用"
+  //   return
+  // } else if (data.data.code != 20000) {
+  //   message.value = "发生错误"
+  //   return
+  // }
   UserStore.setAtoken(data.data.data.atoken)
   UserStore.setRtoken(data.data.data.rtoken)
   // 跳转到主页

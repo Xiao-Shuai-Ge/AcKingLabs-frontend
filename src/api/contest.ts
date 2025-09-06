@@ -47,3 +47,19 @@ export const set_recommend = (data : {
 }) => {
     return http.post('/api/contest/recommend',data)
 }
+
+export const update_contest = (data : {
+    contest_id: string,
+    title: string,
+    start_time: number,
+    end_time: number,
+    url: string,
+}) => {
+    return http.post('/api/contest/update',data)
+}
+
+export const delete_contest = (data : {
+    contest_id: string,
+}) => {
+    return http.post('/api/contest/delete',data)
+}

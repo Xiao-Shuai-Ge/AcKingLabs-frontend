@@ -26,6 +26,7 @@ import 'katex/dist/katex.css' // 引入 KaTeX 的样式
 
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 import {config} from "@/config.js";
 
 const KatexPlugin = createKatexPlugin({ katex });

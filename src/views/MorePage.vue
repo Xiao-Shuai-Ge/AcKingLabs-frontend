@@ -32,6 +32,13 @@ const pages = ref([
     path: "/more/chatroom",
     animationStarted: false,
   },
+  // {
+  //   icon: "fa-solid fa-game",
+  //   title: "带金鱼模拟器",
+  //   description: "管理你的ACM校队，你能达成什么样的成就呢？",
+  //   path: "/more/game",
+  //   animationStarted: false,
+  // },
   {
     icon: "fa-solid fa-ranking-star",
     title: "排行榜",
