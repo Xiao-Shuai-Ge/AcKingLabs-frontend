@@ -103,6 +103,32 @@ const routes = [
         path: '/more/ulearning',
         name: 'Ulearning',
         component: () => import('../views/Ulearning.vue')
+    },
+    {
+        path: '/more/resume',
+        name: 'Resume',
+        component: () => import('../views/ResumePage.vue')
+    },
+    // 管理后台路由
+    {
+        path: '/admin/users',
+        name: 'AdminUsers',
+        component: () => import('../views/admin/UserManagementPage.vue')
+    },
+    {
+        path: '/admin/posts',
+        name: 'AdminPosts',
+        component: () => import('../views/admin/ComingSoonPage.vue')
+    },
+    {
+        path: '/admin/resumes',
+        name: 'AdminResumes',
+        component: () => import('../views/admin/ResumeManagementPage.vue')
+    },
+    {
+        path: '/admin/settings',
+        name: 'AdminSettings',
+        component: () => import('../views/admin/ComingSoonPage.vue')
     }
 ]
 

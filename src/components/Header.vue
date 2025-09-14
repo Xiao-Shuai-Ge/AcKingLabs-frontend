@@ -71,6 +71,7 @@
           <div
               v-for="(option, index) in dropdownOptions"
               :key="index"
+              v-show="!option.show || option.show()"
               class="px-5 py-2.5 hover:bg-gray-100 cursor-pointer transition-all duration-200 text-sm"
               @click = "option.click"
           >
@@ -118,6 +119,7 @@ const navItems = ref([
 const dropdownOptions = ref([
   { label: "个人主页", icon: "fas fa-user" , click: () => navigateToProfile() },
   { label: "消息通知", icon: "fas fa-bell" , click: () => navigateTo("/message") },
+  { label: "管理后台", icon: "fas fa-cog" , click: () => navigateTo("/admin/users"), show: () => myRole.value >= 3 },
   { label: "退出登录", icon: "fas fa-sign-out-alt" , click: () => logout() },
 ]);
 

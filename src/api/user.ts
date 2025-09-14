@@ -41,3 +41,16 @@ export const get_rankings = (data:{ page: number, count: number }) => {
         params: data
     })
 }
+
+// 管理员用户管理接口
+export const get_user_list = (data: { page: number, count: number }) => {
+    return http.get('/api/user/list', {
+        params: data
+    })
+}
+
+export const delete_user = (data: { id: string }) => {
+    return http.post('/api/user/delete', {
+        id: data.id
+    })
+}

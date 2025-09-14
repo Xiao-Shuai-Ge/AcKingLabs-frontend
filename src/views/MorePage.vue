@@ -52,6 +52,13 @@ const pages = ref([
     description: "关于 AcKing 实验室的贡献成员",
     path: "/more/about",
     animationStarted: false,
+  },
+  {
+    icon: "fa-solid fa-file-lines",
+    title: "投递简历",
+    description: "加入 AcKing 实验室，开启您的竞赛之路",
+    path: "/more/resume",
+    animationStarted: false,
   }
 ])
 

@@ -37,7 +37,7 @@
           class="px-2 py-2 border-b border-gray-800 bg-white flexhover:bg-gray-200"
         >
           <!-- 发送者 -->
-          <div v-if="message.SenderID != ''"
+          <div v-if="message.SenderID != '' && message.SenderID != '0'"
               class="flex items-center mr-4 cursor-pointer mb-2 "
               @click="navigateTo('/profile/'+message.SenderID)"
           >
@@ -58,6 +58,9 @@
               <i class="fas fa-circle text-red-500"></i>
             </div>
           </div>
+          <!-- <div v-else class="flex">
+            <div class="bg-gray-800 text-white px-2 py-1 rounded-md">系统</div>
+          </div> -->
           <div
               :class="{ 'hover:underline cursor-pointer' : message.Url }"
                @click="navigateTo(message.Url)"
@@ -200,7 +203,7 @@ const GetMessageList = async () => {
     }
     for (let messageResp of data.data.data.messages) {
       let userInfo : UserInfo
-      if (messageResp.sender_id != "") {
+      if (messageResp.sender_id != "" && messageResp.sender_id != "0") {
         userInfo = await getUserInfo(messageResp.sender_id);
       } else {
         // 留空
