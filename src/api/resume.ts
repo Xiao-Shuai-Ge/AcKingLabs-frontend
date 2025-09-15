@@ -6,6 +6,7 @@ export interface SubmitResumeReq {
   grade: number
   student_no: string
   email: string
+  avatar: string
   extra: {
     information: string
     skills: string
@@ -28,6 +29,7 @@ export interface UpdateResumeReq {
   grade: number
   student_no: string
   email: string
+  avatar: string
   extra: {
     information: string
     skills: string
@@ -49,6 +51,7 @@ export interface GetResumeDetailResp {
   grade: number
   student_no: string
   email: string
+  avatar: string
   extra: {
     information: string
     skills: string
@@ -69,6 +72,7 @@ export interface ResumeListItem {
   grade: number
   student_no: string
   email: string
+  avatar: string
   is_accepted: boolean
   created_at: string
   updated_at: string

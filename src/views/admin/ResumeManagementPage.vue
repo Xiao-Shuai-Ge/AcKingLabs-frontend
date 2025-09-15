@@ -60,6 +60,18 @@
             
             <el-table-column prop="id" label="ID" width="120" />
             
+            <el-table-column label="照片" width="80">
+              <template #default="{ row }">
+                <div class="w-10 overflow-hidden border border-gray-300">
+                  <img
+                    :src="row.avatar || '/assets/default_avatar.png'"
+                    :alt="row.real_name"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+              </template>
+            </el-table-column>
+            
             <el-table-column prop="real_name" label="姓名" width="100" />
             
             <el-table-column prop="student_no" label="学号" width="120" />
@@ -144,6 +156,20 @@
       @close="resetDetailForm"
     >
       <div v-if="currentResume" class="resume-detail">
+        <div class="mb-4 flex items-center space-x-4">
+          <div class="w-64 overflow-hidden border-2 border-gray-300">
+            <img
+              :src="currentResume.avatar || '/assets/default_avatar.png'"
+              :alt="currentResume.real_name"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-gray-800">{{ currentResume.real_name }}</h2>
+            <p class="text-gray-600">{{ currentResume.email }}</p>
+          </div>
+        </div>
+        
         <el-descriptions :column="2" border>
           <el-descriptions-item label="姓名">
             {{ currentResume.real_name }}
@@ -260,6 +286,7 @@ import type { ResumeListItem, GetResumeDetailResp } from '@/api/resume'
 
 // 简历数据类型定义
 interface ResumeItem extends ResumeListItem {
+  avatar?: string
   extra?: {
     information: string
     skills: string

@@ -27,7 +27,6 @@
       <div class="bg-white rounded-lg shadow-lg p-8">
         <form @submit.prevent="submitForm" class="space-y-6">
           <!-- 基本信息 -->
-
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
               邮箱 <span class="text-red-500">*</span>
@@ -68,7 +67,49 @@
             
           </div>
 
-        
+          <hr class="my-4"></hr>
+         
+          <!-- 头像上传 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              本人照片
+            </label>
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-20 overflow-hidden border-2 border-gray-300">
+                <img
+                  :src="formData.avatar || '/assets/default_avatar.png'"
+                  alt="照片预览"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+              <div class="flex-1">
+                <input
+                  v-model="formData.avatar"
+                  type="text"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="请输入图片URL或点击上传"
+                />
+                <!-- <p class="text-xs text-gray-500 mt-1">
+                  支持第三方图床链接，如: https://imgurl.org
+                </p> -->
+              </div>
+              <button
+                type="button"
+                @click="triggerFileUpload"
+                class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors"
+              >
+                上传图片
+              </button>
+              <input
+                type="file"
+                ref="fileInput"
+                class="hidden"
+                accept="image/*"
+                @change="handleFileUpload"
+              />
+            </div>
+          </div>
+
 
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,6 +268,7 @@ import {
   type UpdateResumeReq,
   type GetResumeDetailResp
 } from '@/api/resume'
+import { upload_image } from '@/api/file'
 import { useMessage } from '@/store/message'
 const { addMessage } = useMessage()
 
@@ -240,6 +282,7 @@ const showError = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
 const resumeId = ref('0') // 初始为0，如果获取到已投递简历则更新为实际ID
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // 表单数据
 const formData = reactive({
@@ -247,6 +290,7 @@ const formData = reactive({
   grade: 25,
   student_no: '',
   email: '',
+  avatar: '',
   code: '',
   extra: {
     information: '',
@@ -271,6 +315,50 @@ const isFormValid = computed(() => {
          formData.extra.understanding.length > 0 &&
          formData.extra.future_plan.length > 0
 })
+
+// 触发文件选择
+const triggerFileUpload = () => {
+  fileInput.value?.click()
+}
+
+// 处理文件上传
+const handleFileUpload = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (!file) return
+
+  // 验证文件类型和大小（限制5MB）
+  if (!file.type.startsWith('image/')) {
+    addMessage('只能上传图片文件', 'error')
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    addMessage('文件大小不能超过5MB', 'error')
+    return
+  }
+
+  try {
+    addMessage('上传中...', 'info')
+    const uploadFormData = new FormData()
+    uploadFormData.append('file', file)
+
+    const response = await upload_image(uploadFormData)
+
+    if (response.data.code === 20000) {
+      formData.avatar = response.data.data.url
+      addMessage('上传成功', 'success')
+    }
+  } catch (error) {
+    addMessage('上传失败，请稍后重试', 'error')
+    console.error('Upload error:', error)
+  } finally {
+    // 清空文件输入
+    if (target) {
+      target.value = ''
+    }
+  }
+}
 
 // 发送验证码
 const sendVerificationCode = async () => {
@@ -318,6 +406,7 @@ const fetchExistingResume = async () => {
     formData.grade = response.data.data.grade
     formData.student_no = response.data.data.student_no
     formData.email = response.data.data.email
+    formData.avatar = response.data.data.avatar || ''
     formData.extra = response.data.data.extra
     addMessage('已获取到您的简历信息，可以修改后重新提交', 'success')
   } else {

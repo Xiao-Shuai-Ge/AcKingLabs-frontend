@@ -9,9 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@kangc/v-md-editor": "^2.3.18",
+    "@vueuse/core": "^13.9.0",
     "axios": "^1.8.4",
     "device-detector-js": "^3.0.3",
     "element-plus": "^2.9.10",
