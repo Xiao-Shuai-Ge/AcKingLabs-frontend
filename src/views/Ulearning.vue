@@ -1,69 +1,133 @@
 <template>
-  <div class="min-h-screen bg-gray-50 text-black">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
     <Header/>
 
-    <div class="max-w-3xl mx-auto px-4 py-8 mt-14" v-if="!isLoading">
-      <div class="flex justify-center bg-white rounded-md border-4 border-gray-800 p-4">
-        <h1 class="text-3xl font-bold text-center text-gray-800">签到活动</h1>
-      </div>
-      <!-- 列表  -->
-      <div
-          v-if="actives.length > 0"
-          v-for="(active, index) in actives"
-          @click="Signin(active)"
-          class="mt-4 cursor-pointer flex flex-col border-2 border-gray-800 p-3 rounded-md shadow-lg hover:scale-105 transition-all duration-300"
-          :class="active.colorClass"
-      >
-        <div class="flex font-bold text-lg">
-          {{ active.className }} : {{ active.activeName }}
-          <div v-if="active.isFinished"
-              class="bg-gray-300 text-white rounded-md p-1 text-sm ml-2"
-          >
-            已结束
-          </div>
-          <div v-else
-               class="bg-blue-300 text-white rounded-md p-1 text-sm ml-2"
-          >
-            进行中
-          </div>
-        </div>
-        <div v-if="!active.isSignin" class="flex text-md mt-2">
-          <span class="text-gray-500 font-bold mr-2">签到人数:</span>
-          <span :class="active.percentage >= 20? 'text-green-500 text-sm' : 'text-red-500 text-sm'">{{ active.absenceNum }}</span>
-          <span class="ml-1 text-gray-500 text-sm">/ {{ active.notAbsenceNum + active.absenceNum }}</span>
-        </div>
-        <div v-if="!active.isSignin" class="mt-2 text-sm">
-          <el-progress
-              :percentage="active.percentage"
-              :stroke-width="15"
-              :color="active.percentage >= 20 ?  '#52c41a': '#f5222d'"
-              :format="() => `${active.percentage.toFixed(2)}%`"
-              striped
-              striped-flow
-              :duration="10"
-          />
-
-        </div>
-      </div>
-      <div v-else class="text-center py-16 flex flex-col items-center justify-center">
-        <i class="fas fa-calendar-times text-6xl text-gray-400 mb-4"></i>
-        <span class="text-gray-500 text-lg">近期暂无未签活动</span>
+    <div class="max-w-6xl mx-auto px-6 py-8 mt-14" v-if="!isLoading">
+      <!-- 页面标题 -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">学习管理</h1>
+        <p class="text-gray-600">签到活动与课程管理</p>
       </div>
 
-      <div class="flex justify-center bg-white rounded-md border-4 border-gray-800 p-4 mt-10">
-        <h1 class="text-3xl font-bold text-center text-gray-800">课程列表</h1>
-      </div>
-      <!-- 列表  -->
-      <div
-          v-for="(course, index) in courses"
-          class="mt-4 cursor-pointer flex flex-col border-2 border-gray-800 p-3 rounded-md shadow-lg hover:scale-105 transition-all duration-300"
-          :class="course.isAutoSignin? 'bg-yellow-100' : 'bg-white'"
-           @click="OpenCourseDialog(course)"
-      >
-        <div class="flex font-bold text-lg">
-          {{ course.courseName }}
+      <!-- 签到活动部分 -->
+      <el-card class="mb-8" shadow="hover">
+        <template #header>
+          <div class="flex items-center">
+            <el-icon class="mr-2 text-blue-600"><Calendar /></el-icon>
+            <span class="text-xl font-semibold text-gray-800">签到活动</span>
+          </div>
+        </template>
+        
+        <div v-if="actives.length > 0" class="space-y-4">
+          <el-card
+              v-for="(active, index) in actives"
+              :key="index"
+              @click="Signin(active)"
+              class="cursor-pointer transition-all duration-300 hover:shadow-lg"
+              :class="{
+                'border-l-4 border-green-500': active.isSignin,
+                'border-l-4 border-yellow-500': active.colorClass === 'bg-yellow-100',
+                'border-l-4 border-red-500': active.colorClass === 'bg-red-100',
+                'border-l-4 border-gray-400': active.isFinished
+              }"
+              shadow="never"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center">
+                <el-icon class="mr-2 text-blue-600"><School /></el-icon>
+                <span class="font-semibold text-lg text-gray-800">
+                  {{ active.className }} - {{ active.activeName }}
+                </span>
+              </div>
+              <el-tag 
+                :type="active.isFinished ? 'info' : 'success'"
+                size="small"
+              >
+                {{ active.isFinished ? '已结束' : '进行中' }}
+              </el-tag>
+            </div>
+            
+            <div v-if="!active.isSignin" class="space-y-3">
+              <div class="flex items-center text-sm text-gray-600">
+                <el-icon class="mr-1"><User /></el-icon>
+                <span class="mr-2">签到人数:</span>
+                <span :class="active.percentage >= 20 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+                  {{ active.absenceNum }}
+                </span>
+                <span class="text-gray-500">/ {{ active.notAbsenceNum + active.absenceNum }}</span>
+              </div>
+              
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm text-gray-600">
+                  <span>签到进度</span>
+                  <span class="font-semibold">{{ active.percentage.toFixed(1) }}%</span>
+                </div>
+                <el-progress
+                    :percentage="active.percentage"
+                    :stroke-width="8"
+                    :color="active.percentage >= 20 ? '#67c23a' : '#f56c6c'"
+                    :show-text="false"
+                />
+              </div>
+            </div>
+            
+            <div v-else class="text-center py-2">
+              <el-icon class="text-green-600 text-2xl"><Check /></el-icon>
+              <span class="ml-2 text-green-600 font-semibold">已签到</span>
+            </div>
+          </el-card>
         </div>
-      </div>
+        
+        <el-empty v-else description="近期暂无签到活动" :image-size="120">
+          <template #image>
+            <el-icon size="120" color="#c0c4cc"><Calendar /></el-icon>
+          </template>
+        </el-empty>
+      </el-card>
+
+      <!-- 课程列表部分 -->
+      <el-card shadow="hover">
+        <template #header>
+          <div class="flex items-center">
+            <el-icon class="mr-2 text-purple-600"><Reading /></el-icon>
+            <span class="text-xl font-semibold text-gray-800">课程列表</span>
+          </div>
+        </template>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <el-card
+              v-for="(course, index) in courses"
+              :key="index"
+              @click="OpenCourseDialog(course)"
+              class="cursor-pointer transition-all duration-300 hover:shadow-lg"
+              :class="course.isAutoSignin ? 'border-l-4 border-yellow-500 bg-yellow-50' : 'border-l-4 border-blue-500'"
+              shadow="never"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <el-icon class="mr-2 text-purple-600"><Reading /></el-icon>
+                <span class="font-semibold text-gray-800">{{ course.courseName }}</span>
+              </div>
+              <el-tag 
+                v-if="course.isAutoSignin" 
+                type="warning" 
+                size="small"
+              >
+                自动签到
+              </el-tag>
+            </div>
+            <div v-if="course.isAutoSignin" class="mt-2 text-sm text-gray-600">
+              <span>触发比例: {{ course.Percent }}%</span>
+            </div>
+          </el-card>
+        </div>
+        
+        <el-empty v-if="courses.length === 0" description="暂无课程" :image-size="120">
+          <template #image>
+            <el-icon size="120" color="#c0c4cc"><Reading /></el-icon>
+          </template>
+        </el-empty>
+      </el-card>
     </div>
   </div>
   <el-dialog
@@ -71,29 +135,70 @@
       title="自动签到设置"
       width="500"
       align-center
-      class="flex flex-col"
+      :close-on-click-modal="false"
   >
-    <div>
-      <span>开启自动签到</span>
-      <el-switch
-          v-model="IsAutoSignin"
-          class="ml-2"
-      />
+    <div class="space-y-6">
+      <div class="text-center">
+        <el-icon class="text-4xl text-blue-600 mb-2"><Setting /></el-icon>
+        <h3 class="text-lg font-semibold text-gray-800">{{ SelectCourseName }}</h3>
+        <p class="text-sm text-gray-600">配置自动签到功能</p>
+      </div>
+      
+      <div class="space-y-4">
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div class="flex items-center">
+            <el-icon class="mr-2 text-green-600"><Switch /></el-icon>
+            <span class="font-medium text-gray-700">开启自动签到</span>
+          </div>
+          <el-switch
+              v-model="IsAutoSignin"
+              active-color="#67c23a"
+              inactive-color="#dcdfe6"
+          />
+        </div>
+        
+        <div v-if="IsAutoSignin" class="p-4 bg-blue-50 rounded-lg">
+          <div class="flex items-center mb-3">
+            <el-icon class="mr-2 text-blue-600"><TrendCharts /></el-icon>
+            <span class="font-medium text-gray-700">触发比例设置</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <el-input 
+                v-model="AutoSigninPercent" 
+                placeholder="0-100"
+                type="number"
+                min="0"
+                max="100"
+                class="w-32"
+            />
+            <span class="text-gray-600">%</span>
+            <el-tooltip content="当签到人数达到此比例时自动签到" placement="top">
+              <el-icon class="text-gray-400 cursor-help"><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+          <div class="mt-2">
+            <el-slider
+                v-model="AutoSigninPercent"
+                :min="0"
+                :max="100"
+                :step="5"
+                show-stops
+                show-input
+                class="w-full"
+            />
+          </div>
+        </div>
+      </div>
     </div>
-    <div v-if="IsAutoSignin">
-      <span class="mr-2">触发比例</span>
-      <el-input v-model="AutoSigninPercent" style="width: 100px" placeholder="0~100" />
-    </div>
-
-
 
     <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="CourseDialogVisible = false">
+      <div class="flex justify-end space-x-3">
+        <el-button @click="CourseDialogVisible = false" size="large">
           取消
         </el-button>
-        <el-button type="primary" @click="SaveCourseSetting()">
-          确认
+        <el-button type="primary" @click="SaveCourseSetting()" size="large">
+          <el-icon class="mr-1"><Check /></el-icon>
+          确认设置
         </el-button>
       </div>
     </template>
@@ -106,6 +211,17 @@ import Header from "@/components/Header.vue";
 import {onMounted, ref} from "vue";
 import {signin_list, signin, signin_teacher, get_auto_list, save_auto_setting} from "@/api/test";
 import router from "@/router";
+import { 
+  Calendar, 
+  School, 
+  User, 
+  Check, 
+  Reading, 
+  Setting, 
+  Switch, 
+  TrendCharts, 
+  QuestionFilled 
+} from '@element-plus/icons-vue';
 
 // 使用信息框
 import { CodeHandler, useMessage} from '@/store/message'
