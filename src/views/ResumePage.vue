@@ -224,7 +224,7 @@
                 required
                 rows="4"
                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="请描述您在实验室的未来学习和发展计划"
+                placeholder="请描述您未来的学习和发展计划（详细到每学期以及毕业后的规划）"
               ></textarea>
             </div>
           </div>
