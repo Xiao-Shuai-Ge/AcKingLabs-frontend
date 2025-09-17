@@ -87,7 +87,7 @@
           <div class="flex flex-col space-y-4">
             <div>
               <p class="text-sm text-gray-600">真实姓名</p>
-              <div v-if="editMode">
+              <div v-if="editMode && isAdmin">
                 <el-input
                     v-model="editForm.realName"
                     placeholder="请输入真实姓名"
@@ -102,7 +102,7 @@
             </div>
             <div>
               <p class="text-sm text-gray-600">年级</p>
-              <div v-if="editMode">
+              <div v-if="editMode && isAdmin">
                 <el-input-number
                     v-model="editForm.grade"
                     :min="20"
@@ -118,7 +118,7 @@
             </div>
             <div>
               <p class="text-sm text-gray-600">学号</p>
-              <div v-if="editMode">
+              <div v-if="editMode && isAdmin">
                 <el-input
                     v-model="editForm.studentId"
                     placeholder="请输入真实姓名"
@@ -492,6 +492,15 @@ const isCanEdit = computed(() => {
 const isSuperAdmin = computed(() => {
   if (UserStore.isLogin()) {
     if (UserStore.getUserInfo().role >= 4) {
+      return true;
+    }
+  }
+  return false;
+})
+
+const isAdmin = computed(() => {
+  if (UserStore.isLogin()) {
+    if (UserStore.getUserInfo().role >= 3) {
       return true;
     }
   }
