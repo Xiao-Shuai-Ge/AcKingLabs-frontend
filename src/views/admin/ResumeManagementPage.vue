@@ -32,8 +32,9 @@
               @change="handleStatusFilter"
             >
               <el-option label="全部" value="" />
-              <el-option label="已通过" value="true" />
-              <el-option label="未通过" value="false" />
+              <el-option label="未通过" value="0" />
+              <el-option label="已通过" value="1" />
+              <el-option label="已拒绝" value="-1" />
             </el-select>
             
             <el-button
@@ -86,8 +87,8 @@
             
             <el-table-column label="状态" width="100">
               <template #default="{ row }">
-                <el-tag :type="row.is_accepted ? 'success' : 'warning'">
-                  {{ row.is_accepted ? '已通过' : '未通过' }}
+                <el-tag :type="getStatusTagType(row.status)">
+                  {{ getStatusText(row.status) }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -104,7 +105,7 @@
               </template>
             </el-table-column>
             
-            <el-table-column label="操作" width="300" fixed="right">
+            <el-table-column label="操作" width="350" fixed="right">
               <template #default="{ row }">
                 <el-button
                   type="primary"
@@ -114,12 +115,20 @@
                   查看
                 </el-button>
                 <el-button
-                  v-if="!row.is_accepted"
+                  v-if="row.status === 0"
                   type="success"
                   size="small"
                   @click="acceptResume(row)"
                 >
                   通过
+                </el-button>
+                <el-button
+                  v-if="row.status === 0"
+                  type="warning"
+                  size="small"
+                  @click="rejectResume(row)"
+                >
+                  拒绝
                 </el-button>
                 <el-button
                   type="danger"
@@ -184,8 +193,8 @@
             {{ currentResume.grade }}年级
           </el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag :type="currentResume.is_accepted ? 'success' : 'warning'">
-              {{ currentResume.is_accepted ? '已通过' : '未通过' }}
+            <el-tag :type="getStatusTagType(currentResume.status)">
+              {{ getStatusText(currentResume.status) }}
             </el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="投递时间">
@@ -224,11 +233,18 @@
       <template #footer>
         <el-button @click="detailDialogVisible = false">关闭</el-button>
         <el-button
-          v-if="currentResume && !currentResume.is_accepted"
+          v-if="currentResume && currentResume.status === 0"
           type="success"
           @click="acceptResumeFromDetail"
         >
           通过简历
+        </el-button>
+        <el-button
+          v-if="currentResume && currentResume.status === 0"
+          type="warning"
+          @click="rejectResumeFromDetail"
+        >
+          拒绝简历
         </el-button>
       </template>
     </el-dialog>
@@ -244,6 +260,20 @@
       <template #footer>
         <el-button @click="acceptDialogVisible = false">取消</el-button>
         <el-button type="success" @click="confirmAcceptResume">确定通过</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 拒绝简历确认对话框 -->
+    <el-dialog
+      v-model="rejectDialogVisible"
+      title="拒绝简历"
+      width="400px"
+    >
+      <p>确定要拒绝这份简历吗？此操作不可撤销。</p>
+      
+      <template #footer>
+        <el-button @click="rejectDialogVisible = false">取消</el-button>
+        <el-button type="warning" @click="confirmRejectResume">确定拒绝</el-button>
       </template>
     </el-dialog>
 
@@ -280,12 +310,12 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import AdminSidebar from '@/components/admin/AdminSidebar.vue'
-import { getResumeList, deleteResume as deleteResumeApi, acceptResume as acceptResumeApi, getResumeDetail, getResumeDetailAdmin } from '@/api/resume'
+import { getResumeList, deleteResume as deleteResumeApi, acceptResume as acceptResumeApi, rejectResume as rejectResumeApi, getResumeDetail, getResumeDetailAdmin } from '@/api/resume'
 import Header from '@/components/Header.vue'
 import type { ResumeListItem, GetResumeDetailResp } from '@/api/resume'
 
 // 简历数据类型定义
-interface ResumeItem extends ResumeListItem {
+interface ResumeItem extends Omit<ResumeListItem, 'avatar'> {
   avatar?: string
   extra?: {
     information: string
@@ -310,9 +340,11 @@ const totalResumes = ref(0)
 // 对话框状态
 const detailDialogVisible = ref(false)
 const acceptDialogVisible = ref(false)
+const rejectDialogVisible = ref(false)
 const inviteCodeDialogVisible = ref(false)
 const currentResume = ref<ResumeItem | null>(null)
 const resumeToAccept = ref<ResumeItem | null>(null)
+const resumeToReject = ref<ResumeItem | null>(null)
 const generatedInviteCode = ref('')
 
 // 计算属性 - 过滤后的简历列表
@@ -331,8 +363,8 @@ const computedFilteredResumes = computed(() => {
 
   // 状态筛选
   if (statusFilter.value !== '') {
-    const isAccepted = statusFilter.value === 'true'
-    result = result.filter(resume => resume.is_accepted === isAccepted)
+    const status = parseInt(statusFilter.value)
+    result = result.filter(resume => resume.status === status)
   }
 
   return result
@@ -341,6 +373,34 @@ const computedFilteredResumes = computed(() => {
 // 更新过滤后的简历列表
 const updateFilteredResumes = () => {
   filteredResumes.value = computedFilteredResumes.value
+}
+
+// 获取状态文本
+const getStatusText = (status: number) => {
+  switch (status) {
+    case 0:
+      return '未通过'
+    case 1:
+      return '已通过'
+    case -1:
+      return '已拒绝'
+    default:
+      return '未知'
+  }
+}
+
+// 获取状态标签类型
+const getStatusTagType = (status: number) => {
+  switch (status) {
+    case 0:
+      return 'warning'
+    case 1:
+      return 'success'
+    case -1:
+      return 'danger'
+    default:
+      return 'info'
+  }
 }
 
 // 获取简历列表
@@ -442,6 +502,20 @@ const acceptResumeFromDetail = () => {
   }
 }
 
+// 拒绝简历
+const rejectResume = (resume: ResumeItem) => {
+  resumeToReject.value = resume
+  rejectDialogVisible.value = true
+}
+
+// 从详情页拒绝简历
+const rejectResumeFromDetail = () => {
+  if (currentResume.value) {
+    resumeToReject.value = currentResume.value
+    rejectDialogVisible.value = true
+  }
+}
+
 // 确认通过简历
 const confirmAcceptResume = async () => {
   if (!resumeToAccept.value) return
@@ -457,7 +531,7 @@ const confirmAcceptResume = async () => {
       // 更新简历状态
       const resume = resumes.value.find(r => r.id === resumeToAccept.value!.id)
       if (resume) {
-        resume.is_accepted = true
+        resume.status = 1
         updateFilteredResumes()
       }
       
@@ -470,6 +544,40 @@ const confirmAcceptResume = async () => {
     ElMessage.error('通过简历失败')
   } finally {
     resumeToAccept.value = null
+  }
+}
+
+// 确认拒绝简历
+const confirmRejectResume = async () => {
+  if (!resumeToReject.value) return
+  
+  try {
+    const response = await rejectResumeApi(resumeToReject.value.id)
+    
+    if (response.data.code === 20000) {
+      rejectDialogVisible.value = false
+      
+      // 更新简历状态
+      const resume = resumes.value.find(r => r.id === resumeToReject.value!.id)
+      if (resume) {
+        resume.status = -1
+        updateFilteredResumes()
+      }
+      
+      // 如果当前查看的是被拒绝的简历，也要更新详情页的状态
+      if (currentResume.value && currentResume.value.id === resumeToReject.value.id) {
+        currentResume.value.status = -1
+      }
+      
+      ElMessage.success('简历已拒绝')
+    } else {
+      ElMessage.error('拒绝简历失败')
+    }
+  } catch (error) {
+    console.error('拒绝简历失败:', error)
+    ElMessage.error('拒绝简历失败')
+  } finally {
+    resumeToReject.value = null
   }
 }
 

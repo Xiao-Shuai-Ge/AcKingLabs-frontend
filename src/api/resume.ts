@@ -60,7 +60,7 @@ export interface GetResumeDetailResp {
     future_plan: string
   }
   code: string
-  is_accepted: boolean
+  status: number // 0=未通过，1=已通过，-1=已拒绝
   created_at: string
   updated_at: string
 }
@@ -73,7 +73,7 @@ export interface ResumeListItem {
   student_no: string
   email: string
   avatar: string
-  is_accepted: boolean
+  status: number // 0=未通过，1=已通过，-1=已拒绝
   created_at: string
   updated_at: string
 }
@@ -88,6 +88,15 @@ export interface GetResumeListResp {
 // 通过简历响应
 export interface AcceptResumeResp {
   code: string
+}
+
+// 拒绝简历请求
+export interface RejectResumeReq {
+  id: string
+}
+
+// 拒绝简历响应
+export interface RejectResumeResp {
 }
 
 // 投递简历
@@ -128,6 +137,11 @@ export const deleteResume = (id: string) => {
 // 通过简历（管理员功能）
 export const acceptResume = (id: string) => {
   return http.post('/api/resume/accept', { id })
+}
+
+// 拒绝简历（管理员功能）
+export const rejectResume = (id: string) => {
+  return http.post('/api/resume/reject', { id })
 }
 
 // 发送验证码（复用注册时的验证码接口）
