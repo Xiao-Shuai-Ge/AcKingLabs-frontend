@@ -724,7 +724,7 @@ const handleDisabled = () => {
 }
 
 // 限制输入数字长度
-const limitNumberLength = (event) => {
+const limitNumberLength = (event: any) => {
   if (event.target.value.length > 2) {
     event.target.value = event.target.value.slice(0, 2);
   }
