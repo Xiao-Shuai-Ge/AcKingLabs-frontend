@@ -23,6 +23,34 @@
         </button>
       </div>
 
+      <!-- 简历状态显示 -->
+      <div v-if="resumeStatus !== null" class="mb-6 text-center">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-semibold mb-2">简历状态</h3>
+          <div class="flex items-center justify-center space-x-2">
+            <span class="text-sm text-gray-600">当前状态：</span>
+            <span 
+              class="px-3 py-1 rounded-full text-sm font-medium"
+              :class="getStatusClass(resumeStatus)"
+            >
+              {{ getStatusText(resumeStatus) }}
+            </span>
+          </div>
+          <p v-if="resumeStatus === 0" class="text-sm text-gray-500 mt-2">
+            您的简历正在审核中，请耐心等待
+          </p>
+          <p v-else-if="resumeStatus === 1" class="text-sm text-green-600 mt-2">
+            恭喜！您的简历已通过审核
+          </p>
+          <p v-else-if="resumeStatus === -1" class="text-sm text-red-600 mt-2">
+            很抱歉，您的简历未通过审核
+          </p>
+          <p v-else-if="resumeStatus === 2" class="text-sm text-blue-600 mt-2">
+            您的简历已设为考核状态，请等待进一步通知
+          </p>
+        </div>
+      </div>
+
       <!-- 简历表单 -->
       <div class="bg-white rounded-lg shadow-lg p-8">
         <form @submit.prevent="submitForm" class="space-y-6">
@@ -282,6 +310,7 @@ const showError = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
 const resumeId = ref('0') // 初始为0，如果获取到已投递简历则更新为实际ID
+const resumeStatus = ref<number | null>(null) // 简历状态
 const fileInput = ref<HTMLInputElement | null>(null)
 
 // 表单数据
@@ -315,6 +344,38 @@ const isFormValid = computed(() => {
          formData.extra.understanding.length > 0 &&
          formData.extra.future_plan.length > 0
 })
+
+// 获取状态文本
+const getStatusText = (status: number) => {
+  switch (status) {
+    case 0:
+      return '未通过'
+    case 1:
+      return '已通过'
+    case -1:
+      return '已拒绝'
+    case 2:
+      return '考核'
+    default:
+      return '未知'
+  }
+}
+
+// 获取状态样式类
+const getStatusClass = (status: number) => {
+  switch (status) {
+    case 0:
+      return 'bg-yellow-100 text-yellow-800'
+    case 1:
+      return 'bg-green-100 text-green-800'
+    case -1:
+      return 'bg-red-100 text-red-800'
+    case 2:
+      return 'bg-blue-100 text-blue-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
 
 // 触发文件选择
 const triggerFileUpload = () => {
@@ -402,6 +463,7 @@ const fetchExistingResume = async () => {
 
   if (response.data.code === 20000) {
     resumeId.value = response.data.data.id
+    resumeStatus.value = response.data.data.status
     formData.real_name = response.data.data.real_name
     formData.grade = response.data.data.grade
     formData.student_no = response.data.data.student_no

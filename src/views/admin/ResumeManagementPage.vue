@@ -35,6 +35,7 @@
               <el-option label="未通过" value="0" />
               <el-option label="已通过" value="1" />
               <el-option label="已拒绝" value="-1" />
+              <el-option label="考核" value="2" />
             </el-select>
             
             <el-button
@@ -118,12 +119,20 @@
                   v-if="row.status === 0"
                   type="success"
                   size="small"
+                  @click="pendingResume(row)"
+                >
+                  考核
+                </el-button>
+                <el-button
+                  v-if="row.status === 1"
+                  type="success"
+                  size="small"
                   @click="acceptResume(row)"
                 >
                   通过
                 </el-button>
                 <el-button
-                  v-if="row.status === 0"
+                  v-if="row.status != 2"
                   type="warning"
                   size="small"
                   @click="rejectResume(row)"
@@ -235,12 +244,19 @@
         <el-button
           v-if="currentResume && currentResume.status === 0"
           type="success"
+          @click="pendingResumeFromDetail"
+        >
+          设为待考核
+        </el-button>
+        <el-button
+          v-if="currentResume && currentResume.status === 1"
+          type="success"
           @click="acceptResumeFromDetail"
         >
           通过简历
         </el-button>
         <el-button
-          v-if="currentResume && currentResume.status === 0"
+          v-if="currentResume && currentResume.status != 2"
           type="warning"
           @click="rejectResumeFromDetail"
         >
@@ -277,6 +293,20 @@
       </template>
     </el-dialog>
 
+    <!-- 考核简历确认对话框 -->
+    <el-dialog
+      v-model="pendingDialogVisible"
+      title="设为考核"
+      width="400px"
+    >
+      <p>确定要将这份简历设为考核状态吗？</p>
+      
+      <template #footer>
+        <el-button @click="pendingDialogVisible = false">取消</el-button>
+        <el-button type="info" @click="confirmPendingResume">确定设为考核</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 邀请码显示对话框 -->
     <el-dialog
       v-model="inviteCodeDialogVisible"
@@ -310,7 +340,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import AdminSidebar from '@/components/admin/AdminSidebar.vue'
-import { getResumeList, deleteResume as deleteResumeApi, acceptResume as acceptResumeApi, rejectResume as rejectResumeApi, getResumeDetail, getResumeDetailAdmin } from '@/api/resume'
+import { getResumeList, deleteResume as deleteResumeApi, acceptResume as acceptResumeApi, rejectResume as rejectResumeApi, getResumeDetail, getResumeDetailAdmin, pendingResume as pendingResumeApi  } from '@/api/resume'
 import Header from '@/components/Header.vue'
 import type { ResumeListItem, GetResumeDetailResp } from '@/api/resume'
 
@@ -340,11 +370,13 @@ const totalResumes = ref(0)
 // 对话框状态
 const detailDialogVisible = ref(false)
 const acceptDialogVisible = ref(false)
+const pendingDialogVisible = ref(false)
 const rejectDialogVisible = ref(false)
 const inviteCodeDialogVisible = ref(false)
 const currentResume = ref<ResumeItem | null>(null)
 const resumeToAccept = ref<ResumeItem | null>(null)
 const resumeToReject = ref<ResumeItem | null>(null)
+const resumeToPending = ref<ResumeItem | null>(null)
 const generatedInviteCode = ref('')
 
 // 计算属性 - 过滤后的简历列表
@@ -380,10 +412,12 @@ const getStatusText = (status: number) => {
   switch (status) {
     case 0:
       return '未通过'
-    case 1:
+    case 2:
       return '已通过'
     case -1:
       return '已拒绝'
+    case 1:
+      return '待考核'
     default:
       return '未知'
   }
@@ -394,10 +428,12 @@ const getStatusTagType = (status: number) => {
   switch (status) {
     case 0:
       return 'warning'
-    case 1:
+    case 2:
       return 'success'
     case -1:
       return 'danger'
+    case 1:
+      return 'primary'
     default:
       return 'info'
   }
@@ -494,6 +530,12 @@ const acceptResume = (resume: ResumeItem) => {
   acceptDialogVisible.value = true
 }
 
+// 待考核简历
+const pendingResume = (resume: ResumeItem) => {
+  resumeToPending.value = resume
+  pendingDialogVisible.value = true
+}
+
 // 从详情页通过简历
 const acceptResumeFromDetail = () => {
   if (currentResume.value) {
@@ -516,6 +558,14 @@ const rejectResumeFromDetail = () => {
   }
 }
 
+// 从详情页设为待考核
+const pendingResumeFromDetail = () => {
+  if (currentResume.value) {
+    resumeToPending.value = currentResume.value
+    pendingDialogVisible.value = true
+  }
+}
+
 // 确认通过简历
 const confirmAcceptResume = async () => {
   if (!resumeToAccept.value) return
@@ -531,11 +581,16 @@ const confirmAcceptResume = async () => {
       // 更新简历状态
       const resume = resumes.value.find(r => r.id === resumeToAccept.value!.id)
       if (resume) {
-        resume.status = 1
+        resume.status = 2
         updateFilteredResumes()
       }
       
       ElMessage.success('简历已通过')
+
+      // 如果当前查看的是通过的简历，也要更新详情页的状态
+      if (currentResume.value && currentResume.value.id === resumeToAccept.value.id) {
+        currentResume.value.status = 2
+      }
     } else {
       ElMessage.error('通过简历失败')
     }
@@ -578,6 +633,40 @@ const confirmRejectResume = async () => {
     ElMessage.error('拒绝简历失败')
   } finally {
     resumeToReject.value = null
+  }
+}
+
+// 确认设为待考核
+const confirmPendingResume = async () => {
+  if (!resumeToPending.value) return
+  
+  try {
+    const response = await pendingResumeApi(resumeToPending.value.id)
+    
+    if (response.data.code === 20000) {
+      pendingDialogVisible.value = false
+      
+      // 更新简历状态
+      const resume = resumes.value.find(r => r.id === resumeToPending.value!.id)
+      if (resume) {
+        resume.status = 1
+        updateFilteredResumes()
+      }
+      
+      // 如果当前查看的是被设为待考核的简历，也要更新详情页的状态
+      if (currentResume.value && currentResume.value.id === resumeToPending.value.id) {
+        currentResume.value.status = 1
+      }
+      
+      ElMessage.success('简历已设为考核')
+    } else {
+      ElMessage.error('设为考核失败')
+    }
+  } catch (error) {
+    console.error('设为考核失败:', error)
+    ElMessage.error('设为考核失败')
+  } finally {
+    resumeToPending.value = null
   }
 }
 
