@@ -77,7 +77,7 @@
             <div class="flex h-10 border border-gray-300 rounded-button divide-x divide-gray-300">
               <label
                   v-for="option in privacyOptions"
-                  :key="option.value"
+                  :key="String(option.value)"
                   class="flex-1 flex items-center justify-center gap-2 px-2 cursor-pointer hover:bg-gray-50 transition-colors"
                   :class="{ 'bg-gray-100': option.value === isPrivate }"
               >
@@ -171,7 +171,7 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted} from "vue";
 import Header from "@/components/Header.vue";
-import {getWeekday, GetWeekCode} from "@/utils/week";
+import {GetWeekCode} from "@/utils/week";
 import {create_post} from "@/api/post";
 import router from "@/router";
 
@@ -181,9 +181,11 @@ import {handleUploadImage} from '@/utils/file'
 // 使用信息框
 import {CodeHandler, useMessage} from '@/store/message'
 import {useRoute} from "vue-router";
+import {useUserStore} from "@/store/user";
 const { addMessage } = useMessage()
 
 const route = useRoute();
+const UserStore = useUserStore();
 const isDiary = computed(() => {
   return route.path.startsWith("/diary")
 })
@@ -235,6 +237,11 @@ const typeDisabled = ref(true);
 
 const diaryDisabled = ref(false);
 
+// 管理员权限检查
+const isAdmin = computed(() => {
+  return UserStore.getUserInfo().role >= 3;
+});
+
 onMounted(()=>{
   // 根据周记和帖子进行初始化
   if (isDiary.value) {
@@ -257,13 +264,22 @@ onMounted(()=>{
 
   } else {
     selectedType.value = "教程";
-    postTypes = ["教程", "题解","比赛","闲聊"];
+    // 基础帖子类型
+    postTypes = ["教程", "题解","比赛","闲聊", "求助"];
     typesCode = {
       "教程" : "tutorial",
       "题解" : "solution",
       "比赛" : "contest",
-      "闲聊" : "fun"
+      "闲聊" : "fun",
+      "求助" : "help"
     }
+    // 如果是管理员，添加官方贴类型 (由于需要时间加载账号信息，0.2s后执行)
+    setTimeout(() => {
+      if (isAdmin.value) {
+        postTypes.push("官方");
+        typesCode["官方"] = "official";
+      }
+    }, 200);
     privacyOptions.value = [
       {
         value: false,

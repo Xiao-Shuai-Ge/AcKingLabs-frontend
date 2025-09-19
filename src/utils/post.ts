@@ -11,6 +11,10 @@ export const PostTypeToName = (type_code: string): string => {
             return "比赛";
         case "fun":
             return "闲聊";
+        case "official":
+            return "官方";
+        case "help":
+            return "求助";
     }
     return "未知";
 }
@@ -27,6 +31,10 @@ export const PostTypeToColor = (type_code: string): string => {
             return "text-red-300 border-red-300";
         case "fun":
             return "text-blue-300 border-blue-300";
+        case "official":
+            return "text-green-500 border-green-500";
+        case "help":
+            return "text-orange-500 border-orange-500";
     }
     return "未知";
 }

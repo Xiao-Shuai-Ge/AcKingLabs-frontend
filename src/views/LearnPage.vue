@@ -195,9 +195,11 @@ const search = () => {
 // 帖子类型
 const postTypes = [
   { id: "post", name: "全部" },
+  { id: "official", name: "官方" },
   { id: "tutorial", name: "教程" },
   { id: "solution", name: "题解" },
   { id: "contest", name: "比赛" },
+  { id: "help", name: "求助" },
   { id: "fun", name: "闲聊" },
 ];
 
@@ -236,6 +238,7 @@ const LoadPosts = async () => {
   if (input.value.length == 0) {
     data = await get_page_post({
       type: selectedPostType.value,
+      user_id: "",
       source: "",
       page : currentPage.value,
       by : selectedSortOption.value,

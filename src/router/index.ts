@@ -32,7 +32,7 @@ const routes = [
     {
         path: '/diary/create',
         name: 'DiaryCreate',
-        component: () => import('../views/CreatePage.vue')
+        component: () => import('../views/PostCreatePage.vue')
     },
     {
         path: '/learn',
@@ -42,7 +42,7 @@ const routes = [
     {
         path: '/learn/create',
         name: 'LearnCreate',
-        component: () => import('../views/CreatePage.vue')
+        component: () => import('../views/PostCreatePage.vue')
     },
     {
         path: '/learn/:id',
