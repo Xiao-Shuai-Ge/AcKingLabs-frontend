@@ -33,4 +33,8 @@ export const test_token = () => {
     return http.get('/api/login/test')
 }
 
+export const resetPassword = (data: {email: string, code: string, password: string}) => {
+    return http.post('/api/login/reset-password', data)
+}
+
 

@@ -97,12 +97,12 @@ isLogin ? 'border-b-2 border-black text-gray-900' : 'text-gray-500 hover:text-gr
                   </label>
                 </div>
                 <div class="text-sm">
-                  <a
-                      href="#"
+                  <router-link
+                      to="/reset-password"
                       class="font-medium text-gray-700 hover:text-black cursor-pointer"
                   >
                     忘记密码？
-                  </a>
+                  </router-link>
                 </div>
               </div>
               <button
