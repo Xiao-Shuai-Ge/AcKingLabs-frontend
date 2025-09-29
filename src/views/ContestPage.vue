@@ -204,11 +204,13 @@ import Header from "@/components/Header.vue";
 import {get_contest_list, get_booking, create_booking, set_recommend, update_contest, delete_contest} from "@/api/contest";
 import {Timer, Bell, ChatLineSquare, Plus, Setting, Edit, Delete} from "@element-plus/icons-vue";
 import router from "@/router";
+import {useRoute} from "vue-router";
 const { addMessage } = useMessage()
 
 import {useUserStore} from "@/store/user";
 import {CodeHandler, useMessage} from "@/store/message";
 const userStore = useUserStore();
+const route = useRoute();
 
 const centerDialogVisible = ref(false)
 
@@ -309,10 +311,41 @@ const BookingContest = async (contest: Contest) => {
 // 当前选中的平台
 const selectedPlatform = ref("all");
 
+// URL状态管理
+const updateURL = () => {
+  const query: any = {};
+  if (selectedPlatform.value !== "all") {
+    query.platform = selectedPlatform.value;
+  }
+  if (currentPage.value !== 1) {
+    query.page = currentPage.value.toString();
+  }
+  
+  router.replace({
+    path: route.path,
+    query: Object.keys(query).length > 0 ? query : {}
+  });
+};
+
+// 从URL初始化状态
+const initFromURL = () => {
+  const platform = route.query.platform as string;
+  const page = route.query.page as string;
+  
+  if (platform && platforms.some(p => p.id === platform)) {
+    selectedPlatform.value = platform;
+  }
+  
+  if (page && !isNaN(parseInt(page))) {
+    currentPage.value = parseInt(page);
+  }
+};
+
 // 模拟比赛数据
 const contests = ref<Contest[]>([]);
 
 onMounted(() => {
+  initFromURL();
   LoadContests();
 })
 
@@ -371,6 +404,8 @@ const LoadContests = async () => {
 // 选择平台
 const selectPlatform = (platformId: string) => {
   selectedPlatform.value = platformId;
+  currentPage.value = 1; // 重置到第一页
+  updateURL();
   LoadContests();
 };
 
@@ -494,6 +529,7 @@ const goToContestDetail = (contest_id: string) => {
 // 处理分页
 const handlePageChange = (val: number) => {
   currentPage.value = val;
+  updateURL();
   LoadContests();
   console.log("当前页码:", currentPage.value);
   // 这里可以添加获取对应页数据的逻辑

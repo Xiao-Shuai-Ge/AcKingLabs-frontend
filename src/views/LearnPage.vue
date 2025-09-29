@@ -142,6 +142,7 @@
 import {ref, computed, onMounted} from "vue";
 import Header from "@/components/Header.vue";
 import router from "@/router";
+import {useRoute} from "vue-router";
 import {CheckLevel, GetTextColor} from "@/utils/level";
 import {get_user_info} from "@/api/user";
 import {useUserStore} from "@/store/user";
@@ -176,9 +177,56 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
 //-------------------------------------------------------------------
 
 const UserStore = useUserStore()
+const route = useRoute();
 
 // 搜索输入框
 const input = ref("");
+
+// URL状态管理
+const updateURL = () => {
+  const query: any = {};
+  if (input.value.trim()) {
+    query.search = input.value.trim();
+  }
+  if (selectedPostType.value !== "post") {
+    query.type = selectedPostType.value;
+  }
+  if (selectedSortOption.value !== "popular") {
+    query.sort = selectedSortOption.value;
+  }
+  if (currentPage.value !== 1) {
+    query.page = currentPage.value.toString();
+  }
+  
+  router.replace({
+    path: route.path,
+    query: Object.keys(query).length > 0 ? query : {}
+  });
+};
+
+// 从URL初始化状态
+const initFromURL = () => {
+  const search = route.query.search as string;
+  const type = route.query.type as string;
+  const sort = route.query.sort as string;
+  const page = route.query.page as string;
+  
+  if (search) {
+    input.value = search;
+  }
+  
+  if (type && postTypes.some(t => t.id === type)) {
+    selectedPostType.value = type;
+  }
+  
+  if (sort && sortOptions.some(s => s.id === sort)) {
+    selectedSortOption.value = sort;
+  }
+  
+  if (page && !isNaN(parseInt(page))) {
+    currentPage.value = parseInt(page);
+  }
+};
 
 const search = () => {
   // 初始化帖子类型 和 排序方式
@@ -188,7 +236,8 @@ const search = () => {
   currentPage.value = 1;
   // 清空帖子列表
   Posts.value = [];
-
+  
+  updateURL();
   LoadPosts(); // 重新加载帖子列表
 }
 
@@ -221,6 +270,7 @@ const Posts = ref<any[]>([]);
 const PostMAP = new Map<string,boolean>();
 
 onMounted(async () => {
+  initFromURL();
   await LoadPosts();
 })
 
@@ -301,6 +351,7 @@ const selectPostType = (typeId: string) => {
   input.value = ""; // 清空搜索框
   currentPage.value = 1; // 重置到第一页
   Posts.value = []; // 清空帖子列表
+  updateURL();
   LoadPosts(); // 重新加载帖子列表
 };
 
@@ -310,6 +361,7 @@ const selectSortOption = (sortId: string) => {
   input.value = ""; // 清空搜索框
   currentPage.value = 1; // 重置到第一页
   Posts.value = []; // 清空帖子列表
+  updateURL();
   LoadPosts(); // 重新加载帖子列表
 };
 
@@ -318,6 +370,7 @@ const selectSortOption = (sortId: string) => {
 const handlePageChange = (val: number) => {
   currentPage.value = val;
   Posts.value = []; // 清空帖子列表
+  updateURL();
   LoadPosts(); // 重新加载帖子列表
   console.log("当前页码:", currentPage.value);
 };

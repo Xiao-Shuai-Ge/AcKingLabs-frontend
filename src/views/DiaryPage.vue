@@ -136,6 +136,7 @@ import { ref, computed, onMounted } from "vue";
 import Header from "@/components/Header.vue";
 import {GetStudyTimeString, GetValidSubmissionTime, GetWeekCode, GetWeekday, TimestampFormat} from "@/utils/week";
 import router from "@/router";
+import {useRoute} from "vue-router";
 import {get_diary_list, get_like_post, get_more_post} from "@/api/post";
 import {CheckLevel , GetTextColor} from "@/utils/level";
 import {get_user_info} from "@/api/user";
@@ -168,24 +169,73 @@ const getUserInfo = async (id : string) : Promise<UserInfo> => {
 //-------------------------------------------------------------------
 
 const UserStore = useUserStore()
+const route = useRoute();
 
 const WeekDisplayTime = ref(0);
 const FirstWeekDisplayTime = ref(0);
 
 const DiaryMap = new Map();
 
-onMounted(async () => {
-  // 将WeekDisplayTime时间调到这周周一,无论是周一几点都在周记提交时间范围内
-  const date = new Date()
-  WeekDisplayTime.value = date.getTime();
-  const week = GetWeekday(date);
-  if (week == 1 || (week == 2 && date.getHours() < 12)) {
-    // 往回退
-    WeekDisplayTime.value -= (week-1) * 24 * 60 * 60 * 1000;
-  } else {
-    // 往前推
-    WeekDisplayTime.value += (8-week) * 24 * 60 * 60 * 1000;
+// URL状态管理
+const updateURL = () => {
+  const query: any = {};
+  const currentWeekTime = GetWeekCode(new Date()).code;
+  const displayWeekTime = GetWeekCode(new Date(WeekDisplayTime.value)).code;
+  
+  // 如果不是当前周，则添加time参数（时间戳）
+  if (displayWeekTime !== currentWeekTime) {
+    query.time = WeekDisplayTime.value.toString();
   }
+  
+  // 如果不是默认排序，则添加sort参数
+  if (SelectedTab.value !== "popular") {
+    query.sort = SelectedTab.value;
+  }
+  
+  router.replace({
+    path: route.path,
+    query: Object.keys(query).length > 0 ? query : {}
+  });
+};
+
+// 从URL初始化状态
+const initFromURL = () => {
+  const time = route.query.time as string;
+  const sort = route.query.sort as string;
+ 
+  console.log("触发初始化", time, sort)
+  
+  if (time && !isNaN(parseInt(time))) {
+    // 直接使用时间戳
+    WeekDisplayTime.value = parseInt(time);
+  }
+ 
+  console.log("初始化完成", WeekDisplayTime.value, sort)
+  
+  if (sort && SortTabs.some(s => s.id === sort)) {
+    SelectedTab.value = sort;
+  }
+};
+
+onMounted(async () => {
+  // 先从URL初始化状态
+  initFromURL();
+  
+  // 如果URL中没有指定周次，则设置为当前周
+  if (WeekDisplayTime.value === 0) {
+    console.log("没有指定周次，设置为当前周")
+    const date = new Date()
+    WeekDisplayTime.value = date.getTime();
+    const week = GetWeekday(date);
+    if (week == 1 || (week == 2 && date.getHours() < 12)) {
+      // 往回退
+      WeekDisplayTime.value -= (week-1) * 24 * 60 * 60 * 1000;
+    } else {
+      // 往前推
+      WeekDisplayTime.value += (8-week) * 24 * 60 * 60 * 1000;
+    }
+  }
+  
   // 获得个人周记列表
   const user_id = (await UserStore.getUserInfoForced()).user_id
   //console.log("用户id",user_id)
@@ -276,6 +326,7 @@ const RefreshPostList = () => {
 // 选择排序方式
 const SelectTab = (id : string) => {
   SelectedTab.value = id;
+  updateURL();
   RefreshPostList()
 }
 
@@ -361,12 +412,14 @@ const LoadMorePosts = async (count:number) => {
 // 切换周次
 const prevWeek = () => {
   WeekDisplayTime.value -= 7 * 24 * 60 * 60 * 1000;
+  updateURL();
   RefreshButton()
   RefreshPostList()
 }
 
 const nextWeek = () => {
   WeekDisplayTime.value += 7 * 24 * 60 * 60 * 1000;
+  updateURL();
   RefreshButton()
   RefreshPostList()
 }
