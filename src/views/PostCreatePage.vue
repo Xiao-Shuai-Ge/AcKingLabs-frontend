@@ -356,7 +356,13 @@ const publishPost = async () => {
   }
 
   // 删除草稿内容
-  localStorage.removeItem("draft-diary-content");
+  if (isDiary.value) {
+    localStorage.removeItem("draft-diary-content");
+  } else {
+    localStorage.removeItem("draft-post-content");
+  }
+
+
   // 跳转
   if (isDiary.value) {
     await router.push("/diary/" + data.data.data.id)
