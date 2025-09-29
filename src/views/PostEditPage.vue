@@ -25,7 +25,7 @@
 
         <div class="flex flex-col gap-2">
           <label for="title" class="text-sm font-medium text-gray-700"
-          >时间</label
+          >{{ isDiary ? '时间' : '来源/网址 (选填)' }}</label
           >
           <input
               id="title"
@@ -41,7 +41,7 @@
         <div class="gap-2">
           <label class="text-sm font-medium text-gray-700 w-1/2 float-left mb-2">类型</label>
           <label class="text-sm font-medium text-gray-700 w-1/2 float-right mb-2">隐私
-            <span class="text-xs text-gray-500">(公开双倍经验，私密仅自己和管理可见)</span>
+            <span class="text-xs text-gray-500" v-if="isDiary">(公开双倍经验，私密仅自己和管理可见)</span>
           </label>
           <div class="w-1/3 float-left relative">
             <button
@@ -77,7 +77,7 @@
             <div class="flex h-10 border border-gray-300 rounded-button divide-x divide-gray-300">
               <label
                   v-for="option in privacyOptions"
-                  :key="option.value"
+                  :key="String(option.value)"
                   class="flex-1 flex items-center justify-center gap-2 px-2 cursor-pointer hover:bg-gray-50 transition-colors"
                   :class="{ 'bg-gray-100': option.value === isPrivate }"
               >
@@ -171,7 +171,7 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted} from "vue";
 import Header from "@/components/Header.vue";
-import {getWeekday, GetWeekCode, TimestampFormat} from "@/utils/week";
+import {GetWeekCode, TimestampFormat} from "@/utils/week";
 import {create_post, delete_post, edit_post, get_post_detail} from "@/api/post";
 import router from "@/router";
 
@@ -182,6 +182,7 @@ import {handleUploadImage} from '@/utils/file'
 import {CodeHandler, useMessage} from '@/store/message'
 import {PostTypeToName} from "@/utils/post";
 import {useRoute} from "vue-router";
+import {useUserStore} from "@/store/user";
 const { addMessage } = useMessage()
 
 // 判断是否是移动端
@@ -200,14 +201,62 @@ const selectedType = ref("周记");
 const showTypeDropdown = ref(false);
 
 const route = useRoute();
+const UserStore = useUserStore();
+
+// 判断是否是周记编辑页面
+const isDiary = computed(() => {
+  return route.path.startsWith("/diary")
+});
+
+// 管理员权限检查
+const isAdmin = computed(() => {
+  return UserStore.getUserInfo().role >= 3;
+});
 
 onMounted(async ()=>{
+  // 根据页面类型初始化不同的选项
+  if (isDiary.value) {
+    // 周记编辑页面
+    postTypes = ["周记"];
+    typesCode = {
+      "周记" : "diary",
+    };
+    // 周记保持原有的隐私选项（公开/私密）
+  } else {
+    // 学习帖子编辑页面
+    postTypes = ["教程", "题解","比赛","闲聊", "求助"];
+    typesCode = {
+      "教程" : "tutorial",
+      "题解" : "solution",
+      "比赛" : "contest",
+      "闲聊" : "fun",
+      "求助" : "help"
+    };
+    // 如果是管理员，添加官方贴类型
+    if (isAdmin.value) {
+      postTypes.push("官方");
+      typesCode["官方"] = "official";
+    }
+    // 学习帖子只显示公开选项
+    privacyOptions.value = [
+      {
+        value: false,
+        label: '公开',
+        icon: 'fas fa-globe-asia text-gray-600'
+      }
+    ];
+  }
+
   // 爬取帖子内容
   const data = await get_post_detail({id: String(route.params.id)});
   console.log(data);
   if (data.data.code != 20000) {
     addMessage("获取帖子内容失败","error")
-    await router.push("/diary");
+    if (isDiary.value) {
+      await router.push("/diary");
+    } else {
+      await router.push("/learn");
+    }
     return
   }
 
@@ -219,9 +268,9 @@ onMounted(async ()=>{
   typeDisabled.value = true;
 })
 
-// 新增的隐私选项
+// 新增的隐私选项 - 根据页面类型动态设置
 const isPrivate = ref(false);
-const privacyOptions = ref([
+let privacyOptions = ref([
   {
     value: false,
     label: '公开',
@@ -234,17 +283,13 @@ const privacyOptions = ref([
   }
 ]);
 
-// 帖子类型列表
-const postTypes = [
+// 帖子类型列表 - 根据页面类型动态设置
+let postTypes = [
   "周记",
 ];
 
-const typesCode : Record<string,string> = {
+let typesCode : Record<string,string> = {
   "周记" : "diary",
-  "教程" : "tutorial",
-  "题解" : "solution",
-  "比赛" : "contest",
-  "闲聊" : "fun",
 }
 
 // 当前日期
@@ -299,7 +344,11 @@ const EditPost = async () => {
   localStorage.removeItem("draft-diary-content");
   // 跳转
   setTimeout(() => {
-    router.push("/diary/" + route.params.id)
+    if (isDiary.value) {
+      router.push("/diary/" + route.params.id)
+    } else {
+      router.push("/learn/" + route.params.id)
+    }
   }, 1000);
 };
 
@@ -316,7 +365,11 @@ const deletePost = async () => {
     return
   }
   setTimeout(() => {
-    router.push("/diary")
+    if (isDiary.value) {
+      router.push("/diary")
+    } else {
+      router.push("/learn")
+    }
   }, 1000);
 };
 

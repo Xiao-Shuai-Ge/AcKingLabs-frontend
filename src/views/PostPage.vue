@@ -659,7 +659,11 @@ const navigateToProfile = (id : string) => {
 };
 
 const navigateToEditPage = () => {
-  router.push("/diary/"+route.params.id+"/edit");
+  if (Type.value == "diary") {
+    router.push("/diary/"+route.params.id+"/edit");
+  } else {
+    router.push("/learn/"+route.params.id+"/edit");
+  }
 }
 
 // 跳转到比赛详情

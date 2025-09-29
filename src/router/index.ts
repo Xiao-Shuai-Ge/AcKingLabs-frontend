@@ -55,6 +55,11 @@ const routes = [
         component: () => import('../views/PostPage.vue')
     },
     {
+        path: '/learn/:id/edit',
+        name: 'LearnEdit',
+        component: () => import('../views/PostEditPage.vue')
+    },
+    {
         path: '/profile/:id',
         name: 'Profile',
         component: () => import('../views/ProfilePage.vue')
