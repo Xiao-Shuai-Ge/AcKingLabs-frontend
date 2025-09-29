@@ -122,6 +122,7 @@
             :page-size="postsPerPage"
             :total="totalPages*postsPerPage"
             :pager-count="11"
+            :current-page="currentPage"
             layout="prev, pager, next"
             @current-change="handlePageChange"
         />
@@ -225,6 +226,8 @@ const initFromURL = () => {
   
   if (page && !isNaN(parseInt(page))) {
     currentPage.value = parseInt(page);
+    Posts.value = [];
+    LoadPosts();
   }
 };
 
@@ -283,6 +286,8 @@ const LoadTime = ref(0);
 const LoadPosts = async () => {
   LoadTime.value = new Date().getTime();
   const NowLoadTime = LoadTime.value;
+
+  console.log("当前页数",currentPage.value)
 
   let data;
   if (input.value.length == 0) {

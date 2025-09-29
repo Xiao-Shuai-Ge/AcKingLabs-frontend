@@ -102,6 +102,7 @@
             :page-size="contestsPerPage"
             :total="totalPages*contestsPerPage"
             :pager-count="11"
+            :current-page="currentPage"
             layout="prev, pager, next"
             @current-change="handlePageChange"
         />
