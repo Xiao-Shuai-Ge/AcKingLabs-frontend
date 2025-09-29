@@ -60,6 +60,7 @@
           <span v-if="IsPrivate" class="text-blue-500 border-2 border-blue-500 rounded-md px-1 text-sm">私密</span>
           <span v-if="IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
           <span v-if="IsAdminLike" class="text-red-500 border-2 border-red-500 rounded-md px-1 text-sm">管理推荐</span>
+          <span v-if="ShowAdminRecommend" class="text-green-500 border-2 border-green-500 rounded-md px-1 text-sm">已解答</span>
         </div>
 
         <hr class="border-1 border-gray-800 mb-3" />
@@ -156,7 +157,10 @@
               />
               <div class="ml-4 flex-1">
                 <div class="flex justify-between items-center mb-2">
-                  <h4 class="font-bold" :class="GetTextColor(comment.AuthorLevel)">{{ comment.AuthorName }}</h4>
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-bold" :class="GetTextColor(comment.AuthorLevel)">{{ comment.AuthorName }}</h4>
+                    <span v-if="comment.IsAdminLike && Type == 'help'" class="text-orange-500 border border-orange-500 rounded px-1 text-sm">优质解答</span>
+                  </div>
                   <span class="text-gray-500 text-sm"
                   >{{ comment.PublishDate }}</span
                   >
@@ -351,6 +355,11 @@ const CanSetFeatured = computed(() => {
   return false
 });
 
+// 判断是否显示管理推荐标记
+const ShowAdminRecommend = computed(() => {
+  return Type.value === 'help' && Comments.value.some(comment => comment.IsAdminLike);
+});
+
 const SetFeatured = async () => {
   const data = await set_featured({post_id: String(route.params.id)})
   //console.log(data)
@@ -429,6 +438,7 @@ interface comment_child {
 
   IsLiked: boolean;
   LikedDisabled : boolean;
+  IsAdminLike: boolean;
 }
 
 interface comment {
@@ -447,6 +457,7 @@ interface comment {
 
   IsLiked: boolean;
   LikedDisabled : boolean;
+  IsAdminLike: boolean;
 
   ChildComments : comment_child[];
 }
@@ -524,6 +535,7 @@ const LoadMoreComments = async (count : number) => {
           Likes: comment.likes,
           IsLiked: isLiked.data.data.is_like,
           LikedDisabled: false,
+          IsAdminLike: comment.is_admin_like || false,
           ChildComments: childComments,
         });
         BeforeID.value = comment.id
@@ -565,6 +577,7 @@ const GetChildComment = async (id: string) : Promise<comment_child[]> => {
         Likes: comment.likes,
         IsLiked: isLiked.data.data.is_like,
         LikedDisabled: false,
+        IsAdminLike: comment.is_admin_like || false,
       });
     }
   }
