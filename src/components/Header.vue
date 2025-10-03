@@ -50,7 +50,7 @@
                 :src="userAvatarUrl"
                 alt="用户头像"
                 class="w-full h-full object-cover object-top"
-                @click="navigateTo('/login')"
+                @click="handleAvatarClick"
             />
             <!-- 消息提示红点 -->
             <span
@@ -266,6 +266,14 @@ const closeDropdown = () => {
 const openDropdown = () => {
   showDropdown.value = true;
   closeDropdownTimer = 0;
+}
+
+const handleAvatarClick = () => {
+  if (myID.value === "") {
+    navigateTo('/login');
+    return;
+  }
+  navigateTo('/profile/' + myID.value);
 }
 
 </script>
