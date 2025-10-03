@@ -174,6 +174,94 @@
             </div>
           </div>
         </div>
+
+        <!-- 个性签名 -->
+        <div class="mt-6 pt-6 border-t-2 border-gray-200">
+          <p class="text-sm text-gray-600 mb-2">个性签名</p>
+          <div v-if="editMode">
+            <el-input
+                v-model="editForm.signature"
+                type="textarea"
+                :rows="3"
+                placeholder="写下你的个性签名..."
+                maxlength="200"
+                show-word-limit
+            ></el-input>
+          </div>
+          <div v-else>
+            <p class="text-gray-700 italic">{{ userInfo.signature || '这个人很懒，什么都没有写...' }}</p>
+          </div>
+        </div>
+
+        <!-- 获奖经历 -->
+        <div class="mt-6 pt-6 border-t-2 border-gray-200">
+          <div class="flex justify-between items-center mb-4">
+            <p class="text-lg font-semibold text-gray-800">🏆 获奖经历</p>
+            <el-button 
+                v-if="editMode" 
+                type="primary" 
+                size="small" 
+                @click="addAward"
+                plain
+            >
+              <i class="fas fa-plus mr-1"></i> 添加奖项
+            </el-button>
+          </div>
+          
+          <div v-if="editMode && editForm.awards.length > 0" class="space-y-3">
+            <div 
+                v-for="(award, index) in editForm.awards" 
+                :key="index"
+                class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border-2 border-gray-200"
+            >
+              <el-input
+                  v-model="award.name"
+                  placeholder="奖项名称"
+                  class="flex-1"
+                  maxlength="50"
+              ></el-input>
+              <el-select
+                  v-model="award.level"
+                  placeholder="等级"
+                  style="width: 120px"
+              >
+                <el-option label="一等奖" :value="1"></el-option>
+                <el-option label="二等奖" :value="2"></el-option>
+                <el-option label="三等奖" :value="3"></el-option>
+              </el-select>
+              <el-button 
+                  type="danger" 
+                  size="small" 
+                  circle
+                  @click="removeAward(index)"
+              >
+                <i class="fas fa-trash"></i>
+              </el-button>
+            </div>
+          </div>
+          
+          <div v-else-if="!editMode && userInfo.awards.length > 0" class="grid grid-cols-1 gap-3">
+            <div 
+                v-for="(award, index) in userInfo.awards" 
+                :key="index"
+                class="flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 hover:shadow-md"
+                :class="getAwardColorClass(award.level)"
+            >
+              <div class="text-2xl">
+                {{ getAwardIcon(award.level) }}
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold text-gray-800">{{ award.name }}</p>
+                <p class="text-sm text-gray-600">{{ getAwardLevelText(award.level) }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div v-else-if="!editMode" class="text-center text-gray-400 py-8">
+            <i class="fas fa-trophy text-4xl mb-2"></i>
+            <p>暂无获奖记录</p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -353,7 +441,7 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted, watch} from "vue";
 import Header from "@/components/Header.vue";
-import {get_user_info, get_user_profile, set_profile, set_role} from "@/api/user";
+import {get_user_info, get_user_profile, set_profile, set_role, Award} from "@/api/user";
 import {useRoute} from "vue-router";
 import {CheckLevel, GetTextColor, GetBgColor, GetRoleName, NextLevelLimit} from "@/utils/level";
 import {useUserStore} from "@/store/user";
@@ -411,7 +499,9 @@ const userInfo = ref({
   experiencePercentage: 20,
   role : 0,
   level: 0,
-  nextLevelXp : 0
+  nextLevelXp : 0,
+  signature: "",
+  awards: [] as Award[]
 });
 
 const route = useRoute()
@@ -450,6 +540,10 @@ const LoadUserInfo = async () => {
   userInfo.value.experience = data.data.data.xp;
   // 权限角色
   userInfo.value.role = data.data.data.role;
+  // 个性签名
+  userInfo.value.signature = format(data.data.data.signature);
+  // 获奖经历
+  userInfo.value.awards = data.data.data.awards || [];
 
   console.log("用户权限等级:",data.data.data.role)
   // 等级
@@ -629,16 +723,24 @@ const editForm = ref({
   studentId: "",
   codeforcesId: "",
   role: 0,
+  signature: "",
+  awards: [] as Award[]
 });
 
 const openEditMode = () => {
-  editForm.value = { ...userInfo.value };
+  editForm.value = { 
+    ...userInfo.value,
+    awards: JSON.parse(JSON.stringify(userInfo.value.awards)) // Deep copy awards array
+  };
   editMode.value = true;
 }
 
 // 打开编辑弹窗
 const openEditModal = () => {
-  editForm.value = { ...userInfo.value };
+  editForm.value = { 
+    ...userInfo.value,
+    awards: JSON.parse(JSON.stringify(userInfo.value.awards)) // Deep copy awards array
+  };
   showEditModal.value = true;
 };
 
@@ -664,6 +766,8 @@ const saveUserInfo = async () => {
     grade: editForm.value.grade,
     student_no: editForm.value.studentId,
     codeforces_id: editForm.value.codeforcesId,
+    signature: editForm.value.signature,
+    awards: editForm.value.awards,
   })
   console.log(data.data);
   if (data.data.code != 20000) {
@@ -796,6 +900,45 @@ const roleOptions = [
     { value: 3, label: "管理员" },
     { value: 4, label: "超级管理员" }
 ]
+
+// 获奖相关函数
+const addAward = () => {
+  editForm.value.awards.push({
+    name: "",
+    level: 1
+  });
+};
+
+const removeAward = (index: number) => {
+  editForm.value.awards.splice(index, 1);
+};
+
+const getAwardIcon = (level: number) => {
+  switch(level) {
+    case 1: return "🥇";
+    case 2: return "🥈";
+    case 3: return "🥉";
+    default: return "🏅";
+  }
+};
+
+const getAwardLevelText = (level: number) => {
+  switch(level) {
+    case 1: return "一等奖";
+    case 2: return "二等奖";
+    case 3: return "三等奖";
+    default: return "未知";
+  }
+};
+
+const getAwardColorClass = (level: number) => {
+  switch(level) {
+    case 1: return "border-yellow-400 bg-yellow-50 hover:bg-yellow-100";
+    case 2: return "border-gray-400 bg-gray-50 hover:bg-gray-100";
+    case 3: return "border-orange-400 bg-orange-50 hover:bg-orange-100";
+    default: return "border-gray-300 bg-gray-50";
+  }
+};
 
 </script>
 

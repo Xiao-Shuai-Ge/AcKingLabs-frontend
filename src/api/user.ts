@@ -20,6 +20,11 @@ export const get_user_profile = (data : {id: string}) => {
     })
 }
 
+export interface Award {
+    name: string;
+    level: number; // 1-一等奖 2-二等奖 3-三等奖
+}
+
 export const set_profile = (data:{
     id:string,
     username: string,
@@ -28,6 +33,8 @@ export const set_profile = (data:{
     grade: number,
     student_no: string,
     codeforces_id: string,
+    signature: string,
+    awards: Award[],
 }) => {
     return http.post('/api/user/profile',data)
 }
