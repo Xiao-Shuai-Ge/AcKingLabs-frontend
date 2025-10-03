@@ -118,8 +118,9 @@ const navItems = ref([
 // 下拉菜单选项
 const dropdownOptions = ref([
   { label: "个人主页", icon: "fas fa-user" , click: () => navigateToProfile() },
+  { label: "个人设置", icon: "fas fa-cog" , click: () => navigateTo("/settings") },
   { label: "消息通知", icon: "fas fa-bell" , click: () => navigateTo("/message") },
-  { label: "管理后台", icon: "fas fa-cog" , click: () => navigateTo("/admin/users"), show: () => myRole.value >= 3 },
+  { label: "管理后台", icon: "fas fa-gear" , click: () => navigateTo("/admin/users"), show: () => myRole.value >= 3 },
   { label: "退出登录", icon: "fas fa-sign-out-alt" , click: () => logout() },
 ]);
 

@@ -61,3 +61,23 @@ export const delete_user = (data: { id: string }) => {
         id: data.id
     })
 }
+
+// 用户设置相关接口
+export interface SettingsJSON {
+    system_message_email_notify: boolean; // 系统消息邮箱通知
+    like_notify: boolean;                 // 点赞通知
+    reply_notify: boolean;                // 回复通知
+    help_post_notify: boolean;            // 发布求助帖通知
+}
+
+export const get_setting = () => {
+    return http.get('/api/user/setting')
+}
+
+export const update_setting = (data: { settings: SettingsJSON }) => {
+    return http.post('/api/user/setting', data)
+}
+
+export const reset_setting = () => {
+    return http.post('/api/user/setting/reset')
+}
