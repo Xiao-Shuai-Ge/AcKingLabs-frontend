@@ -26,16 +26,26 @@
           </button>
         </div>
       </div>
-      <div v-if="editMode">
-        <el-input
-            v-model="editForm.username"
-            placeholder="请输入用户名"
-            maxlength="20"
-            minlength="0"
-        ></el-input>
-      </div>
-      <div v-else>
-        <h1 class="text-3xl font-bold mb-8" :class = GetTextColor(userInfo.level) >{{ userInfo.username }}</h1>
+      <div class="text-center">
+        <div v-if="editMode" class="mb-2">
+          <el-input
+              v-model="editForm.username"
+              placeholder="请输入用户名"
+              maxlength="20"
+              minlength="0"
+          ></el-input>
+        </div>
+        <h1 v-else class="text-3xl font-bold mb-2" :class = GetTextColor(userInfo.level) >{{ userInfo.username }}</h1>
+        
+        <!-- 个性签名 -->
+        <div v-if="editMode" class="mb-6">
+          <el-input
+              v-model="editForm.signature"
+              placeholder="写下你的个性签名..."
+              maxlength="200"
+          ></el-input>
+        </div>
+        <p v-else class="text-gray-500 italic text-sm mb-6">{{ userInfo.signature || '此人很懒什么也没写' }}</p>
       </div>
 
       <div class="w-full m-2 flex justify-end">
@@ -175,27 +185,9 @@
           </div>
         </div>
 
-        <!-- 个性签名 -->
-        <div class="mt-6 pt-6 border-t-2 border-gray-200">
-          <p class="text-sm text-gray-600 mb-2">个性签名</p>
-          <div v-if="editMode">
-            <el-input
-                v-model="editForm.signature"
-                type="textarea"
-                :rows="3"
-                placeholder="写下你的个性签名..."
-                maxlength="200"
-                show-word-limit
-            ></el-input>
-          </div>
-          <div v-else>
-            <p class="text-gray-700 italic">{{ userInfo.signature || '这个人很懒，什么都没有写...' }}</p>
-          </div>
-        </div>
-
         <!-- 获奖经历 -->
-        <div class="mt-6 pt-6 border-t-2 border-gray-200">
-          <div class="flex justify-between items-center mb-4">
+        <div v-if="editMode || userInfo.awards.length > 0" class="mt-6 pt-6 border-t-2 border-gray-200">
+          <div class="flex justify-between items-center mb-6">
             <p class="text-lg font-semibold text-gray-800">🏆 获奖经历</p>
             <el-button 
                 v-if="editMode" 
@@ -208,6 +200,7 @@
             </el-button>
           </div>
           
+          <!-- 编辑模式 -->
           <div v-if="editMode && editForm.awards.length > 0" class="space-y-3">
             <div 
                 v-for="(award, index) in editForm.awards" 
@@ -225,9 +218,9 @@
                   placeholder="等级"
                   style="width: 120px"
               >
-                <el-option label="一等奖" :value="1"></el-option>
-                <el-option label="二等奖" :value="2"></el-option>
-                <el-option label="三等奖" :value="3"></el-option>
+                <el-option label="一等奖/金奖" :value="1"></el-option>
+                <el-option label="二等奖/银奖" :value="2"></el-option>
+                <el-option label="三等奖/铜奖" :value="3"></el-option>
               </el-select>
               <el-button 
                   type="danger" 
@@ -240,23 +233,39 @@
             </div>
           </div>
           
-          <div v-else-if="!editMode && userInfo.awards.length > 0" class="grid grid-cols-1 gap-3">
+          <!-- 显示模式 - 时间线样式 -->
+          <div v-else-if="!editMode && userInfo.awards.length > 0" class="relative pl-6">
             <div 
                 v-for="(award, index) in userInfo.awards" 
                 :key="index"
-                class="flex items-center gap-3 p-4 rounded-lg border-2 transition-all duration-300 hover:shadow-md"
-                :class="getAwardColorClass(award.level)"
+                class="relative pb-4 last:pb-0"
             >
-              <div class="text-2xl">
-                {{ getAwardIcon(award.level) }}
+              <!-- 连接线 -->
+              <div 
+                  v-if="index < userInfo.awards.length - 1"
+                  class="absolute left-0 top-4 w-0.5 h-full -ml-3"
+                  :class="getAwardLineColor(award.level)"
+              ></div>
+              
+              <!-- 圆点 -->
+              <div 
+                  class="absolute left-0 top-0.5 w-5 h-5 -ml-5 rounded-full shadow-md transition-transform duration-300 hover:scale-125"
+                  :class="getAwardCircleClass(award.level)"
+              >
               </div>
-              <div class="flex-1">
-                <p class="font-semibold text-gray-800">{{ award.name }}</p>
-                <p class="text-sm text-gray-600">{{ getAwardLevelText(award.level) }}</p>
+              
+              <!-- 奖项内容 -->
+              <div class="ml-2 transition-all duration-300 hover:translate-x-1">
+                <p class="font-medium text-gray-800 text-base">
+
+                  <span class="mr-1" :class="getAwardTextColor(award.level)">{{ award.name }}</span>
+                  <span class="mr-1">{{ getAwardIcon(award.level) }}</span>
+                </p>
               </div>
             </div>
           </div>
           
+          <!-- 空状态 -->
           <div v-else-if="!editMode" class="text-center text-gray-400 py-8">
             <i class="fas fa-trophy text-4xl mb-2"></i>
             <p>暂无获奖记录</p>
@@ -541,9 +550,9 @@ const LoadUserInfo = async () => {
   // 权限角色
   userInfo.value.role = data.data.data.role;
   // 个性签名
-  userInfo.value.signature = format(data.data.data.signature);
-  // 获奖经历
-  userInfo.value.awards = data.data.data.awards || [];
+  userInfo.value.signature = data.data.data.signature;
+  // 获奖经历（自动排序：一等奖 > 二等奖 > 三等奖）
+  userInfo.value.awards = (data.data.data.awards || []).sort((a: Award, b: Award) => a.level - b.level);
 
   console.log("用户权限等级:",data.data.data.role)
   // 等级
@@ -757,6 +766,8 @@ const saveUserInfo = async () => {
     const data2 = await set_role({id: String(route.params.id), role: editForm.value.role});
     console.log("修改权限请求:",data2);
   }
+  // 对奖项进行排序后再保存
+  const sortedAwards = [...editForm.value.awards].sort((a, b) => a.level - b.level);
   // 修改用户信息
   const data = await set_profile({
     id : String(route.params.id),
@@ -767,7 +778,7 @@ const saveUserInfo = async () => {
     student_no: editForm.value.studentId,
     codeforces_id: editForm.value.codeforcesId,
     signature: editForm.value.signature,
-    awards: editForm.value.awards,
+    awards: sortedAwards,
   })
   console.log(data.data);
   if (data.data.code != 20000) {
@@ -922,21 +933,31 @@ const getAwardIcon = (level: number) => {
   }
 };
 
-const getAwardLevelText = (level: number) => {
+// 时间线样式相关函数
+const getAwardCircleClass = (level: number) => {
   switch(level) {
-    case 1: return "一等奖";
-    case 2: return "二等奖";
-    case 3: return "三等奖";
-    default: return "未知";
+    case 1: return "bg-gradient-to-br from-yellow-300 to-yellow-500";
+    case 2: return "bg-gradient-to-br from-gray-300 to-gray-400";
+    case 3: return "bg-gradient-to-br from-orange-300 to-orange-400";
+    default: return "bg-gray-300";
   }
 };
 
-const getAwardColorClass = (level: number) => {
+const getAwardLineColor = (level: number) => {
   switch(level) {
-    case 1: return "border-yellow-400 bg-yellow-50 hover:bg-yellow-100";
-    case 2: return "border-gray-400 bg-gray-50 hover:bg-gray-100";
-    case 3: return "border-orange-400 bg-orange-50 hover:bg-orange-100";
-    default: return "border-gray-300 bg-gray-50";
+    case 1: return "bg-yellow-400";
+    case 2: return "bg-gray-400";
+    case 3: return "bg-orange-400";
+    default: return "bg-gray-300";
+  }
+};
+
+const getAwardTextColor = (level: number) => {
+  switch(level) {
+    case 1: return "text-yellow-600";
+    case 2: return "text-gray-600";
+    case 3: return "text-orange-600";
+    default: return "text-gray-500";
   }
 };
 
