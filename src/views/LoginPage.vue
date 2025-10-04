@@ -334,9 +334,9 @@ const handleLogin = async () => {
     is_remember : loginForm.value.rememberMe,
   })
   console.log(data)
-  if (data.data.code === 10009) {
-    // 账号密码错误
-    message.value = "账号或密码错误"
+  if (data.data.code != 20000) {
+    message.value = data.data.message
+    return
   }
   UserStore.setAtoken(data.data.data.atoken)
   UserStore.setRtoken(data.data.data.rtoken)
@@ -401,7 +401,7 @@ const sendVerificationCode = async () => {
   const data = await send_code({email: registerForm.value.email})
   console.log(data)
   if (data.data.code != 20000) {
-    message.value = "发生错误"
+    message.value = data.data.message
     return
   }
   message.value = ""

@@ -364,7 +364,7 @@ const SetFeatured = async () => {
   const data = await set_featured({post_id: String(route.params.id)})
   //console.log(data)
   if (data.data.code != 20000) {
-    addMessage("设置精华失败","error")
+    addMessage(data.data.message || "设置精华失败","error")
     return
   }
   addMessage("设置精华成功","success")
@@ -384,7 +384,7 @@ onMounted(async () => {
   }
   //console.log(data);
   if (data.data.code != 20000) {
-    addMessage("查看帖子失败","error")
+    addMessage(data.data.message || "查看帖子失败","error")
     await router.push("/diary");
     return
   }
@@ -485,7 +485,7 @@ const ClickLike = async () => {
   const data = await like_post({post_id: String(route.params.id)});
   //console.log(data)
   if (data.data.code != 20000) {
-    addMessage('点赞失败', 'error')
+    addMessage(data.data.message || '点赞失败', 'error')
     return
   }
   if (IsLiked.value) {
@@ -599,7 +599,7 @@ const CreateComment = async () => {
   })
   console.log(data);
   if (data.data.code != 20000) {
-    addMessage('发送失败', 'error')
+    addMessage(data.data.message || '发送失败', 'error')
     return
   }
   newComment.value = "";
@@ -620,7 +620,7 @@ const DeleteComment = async (comment: comment,comment_id : string) => {
     comment_id: comment_id,
   })
   if (data.data.code != 20000) {
-    addMessage('删除失败', 'error')
+    addMessage(data.data.message || '删除失败', 'error')
     return
   }
   addMessage('删除成功', 'success')
@@ -639,7 +639,7 @@ const ClickCommentLike = async (selectComment : comment | comment_child) => {
   },300)
   const data = await like_comment({comment_id: selectComment.ID});
   if (data.data.code != 20000) {
-    addMessage('点赞失败', 'error')
+    addMessage(data.data.message || '点赞失败', 'error')
     return
   }
   if (selectComment.IsLiked) {

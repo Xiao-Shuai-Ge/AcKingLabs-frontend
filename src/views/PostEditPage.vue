@@ -251,7 +251,7 @@ onMounted(async ()=>{
   const data = await get_post_detail({id: String(route.params.id)});
   console.log(data);
   if (data.data.code != 20000) {
-    addMessage("获取帖子内容失败","error")
+    addMessage(data.data.message || "获取帖子内容失败","error")
     if (isDiary.value) {
       await router.push("/diary");
     } else {

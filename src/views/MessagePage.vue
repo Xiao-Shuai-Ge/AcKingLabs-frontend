@@ -120,7 +120,7 @@ const UserStore = useUserStore()
 onMounted( async () => {
   const data = await get_message_count();
   if (data.data.code != 20000) {
-    addMessage("获取消息数量失败", "error")
+    addMessage(data.data.message || "获取消息数量失败", "error")
     return
   }
   SystemCount.value = data.data.data.system_count;
@@ -194,7 +194,7 @@ const GetMessageList = async () => {
   for (let item of TypeTabs) {
     const data = await get_message_list({ type: item.id });
     if (data.data.code != 20000) {
-      addMessage("获取消息列表失败", "error")
+      addMessage(data.data.message || "获取消息列表失败", "error")
       return
     }
     console.log(data.data.data);
@@ -255,7 +255,7 @@ const markRead = async (message : Message) => {
 
   const data = await mark_message_read({message_id: message.ID})
   if (data.data.code != 20000) {
-    addMessage("标记已读失败", "error");
+    addMessage(data.data.message || "标记已读失败", "error");
     return;
   }
 }

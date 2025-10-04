@@ -430,7 +430,7 @@ const updateRecommendSetting = async () => {
       contest.value.isRecommend = isRecommend.value;
       settingsDialogVisible.value = false;
     } else {
-      addMessage('设置失败', 'error');
+      addMessage(data.data.message || '设置失败', 'error');
     }
   } catch (error) {
     addMessage('设置失败', 'error');
@@ -478,7 +478,7 @@ const updateContest = async () => {
       contest.value.url = editForm.value.url;
       editDialogVisible.value = false;
     } else {
-      addMessage('更新失败', 'error');
+      addMessage(data.data.message || '更新失败', 'error');
     }
   } catch (error) {
     addMessage('更新失败', 'error');
@@ -506,7 +506,7 @@ const deleteContest = async () => {
       // 跳转到比赛列表页面
       router.push('/contest');
     } else {
-      addMessage('删除失败', 'error');
+      addMessage(data.data.message || '删除失败', 'error');
     }
   } catch (error) {
     addMessage('删除失败', 'error');

@@ -208,7 +208,7 @@ const loadSettings = async () => {
       originalSettings.value = { ...response.data.data.settings }
       addMessage('设置加载成功', 'success')
     } else {
-      addMessage('加载设置失败', 'error')
+      addMessage(response.data.message || '加载设置失败', 'error')
     }
   } catch (error) {
     console.error('加载设置失败:', error)

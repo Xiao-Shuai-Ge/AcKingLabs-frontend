@@ -303,7 +303,7 @@ const BookingContest = async (contest: Contest) => {
       addMessage('取消预约成功','success')
     }
   } else {
-    addMessage('操作失败', 'error')
+    addMessage(data.data.message || '操作失败', 'error')
   }
   contest.isBooking = !contest.isBooking;
 }
@@ -433,7 +433,7 @@ const postContestSetting = async () => {
     addMessage('设置成功','success')
     selectedContest.value.isRecommend = IsRecommend.value
   } else {
-    addMessage('设置失败', 'error')
+    addMessage(data.data.message || '设置失败', 'error')
   }
   // 关闭窗口
   centerDialogVisible.value = false
@@ -580,7 +580,7 @@ const updateContest = async () => {
       selectedContestForEdit.value!.url = editForm.value.url;
       editDialogVisible.value = false;
     } else {
-      addMessage('更新失败', 'error');
+      addMessage(data.data.message || '更新失败', 'error');
     }
   } catch (error) {
     addMessage('更新失败', 'error');
@@ -612,7 +612,7 @@ const deleteContest = async () => {
         contests.value.splice(index, 1);
       }
     } else {
-      addMessage('删除失败', 'error');
+      addMessage(data.data.message || '删除失败', 'error');
     }
   } catch (error) {
     addMessage('删除失败', 'error');

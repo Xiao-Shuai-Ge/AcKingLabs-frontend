@@ -263,7 +263,7 @@ onMounted(async () => {
   addMessage("加载中...","info")
   const data = await signin_list();
   if (data.data.code != 20000) {
-    addMessage("发生错误!","error")
+    addMessage(data.data.message || "发生错误!","error")
     setTimeout(() => {
       router.push("/");
     },1000)
@@ -339,7 +339,7 @@ const Signin = async (active : Active) => {
   }
   console.log("签到结果",data)
   if (data.data.code != 20000) {
-    addMessage("签到失败!","error")
+    addMessage(data.data.message || "签到失败!","error")
     active.colorClass = "bg-red-100"
     active.disabled = false
     active.teacherMode = true
@@ -382,7 +382,7 @@ const SaveCourseSetting = async () => {
     percent: Number(AutoSigninPercent.value),
   })
   if (data.data.code != 20000) {
-    addMessage("设置失败!","error")
+    addMessage(data.data.message || "设置失败!","error")
     console.log(data.data)
     return
   }

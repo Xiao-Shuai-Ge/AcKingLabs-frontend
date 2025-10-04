@@ -782,7 +782,7 @@ const saveUserInfo = async () => {
   })
   console.log(data.data);
   if (data.data.code != 20000) {
-    addMessage('保存失败', 'error')
+    addMessage(data.data.message || '保存失败', 'error')
     return;
   }
   addMessage('保存成功','success')
