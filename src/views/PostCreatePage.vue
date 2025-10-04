@@ -100,9 +100,9 @@
             <span
                 class="float-right"
                 :class="{
-                  'text-red-500': postContent.length === 0 || postContent.length > 20000,
+                  'text-red-500': postContent.length === 0 || postContent.length > contentLimit.maxPostLength,
                 }"
-            >{{ postContent.length }}  / 20000</span>
+            >{{ postContent.length }}  / {{ contentLimit.maxPostLength }}</span>
           </label>
           <div class="shadow-white">
             <v-md-editor
@@ -182,6 +182,7 @@ import {handleUploadImage} from '@/utils/file'
 import {CodeHandler, useMessage} from '@/store/message'
 import {useRoute} from "vue-router";
 import {useUserStore} from "@/store/user";
+import {getContentLimit} from "@/utils/contentLimit";
 const { addMessage } = useMessage()
 
 const route = useRoute();
@@ -240,6 +241,12 @@ const diaryDisabled = ref(false);
 // 管理员权限检查
 const isAdmin = computed(() => {
   return UserStore.getUserInfo().role >= 3;
+});
+
+// 根据用户角色获取内容长度限制
+const contentLimit = computed(() => {
+  const userRole = UserStore.getUserInfo().role;
+  return getContentLimit(userRole);
 });
 
 onMounted(()=>{
@@ -322,14 +329,14 @@ const selectType = (type: string) => {
 };
 
 const saveDisabled = computed(() => {
-  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 20000 || diaryDisabled.value) {
+  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > contentLimit.value.maxPostLength || diaryDisabled.value) {
     return true;
   }
   return false;
 })
 
 const saveDraftDisabled = computed(() => {
-  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 20000) {
+  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > contentLimit.value.maxPostLength) {
     return true;
   }
   return false;
@@ -346,12 +353,8 @@ const publishPost = async () => {
     is_private: isPrivate.value,
   })
   console.log(data)
-  if (CodeHandler(data.data.code,[
-      [20000, "发布成功","success"],
-      [10012, "你已发布过本周周记!","error"],
-      [-20008, "请先实名认证!","error"],
-      [0, "发布失败","error"]]))
-  {
+  if (data.data.code != 20000) {
+    addMessage(data.data.message, 'error')
     return
   }
 

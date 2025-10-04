@@ -101,9 +101,9 @@
             <span
                 class="float-right"
                 :class="{
-                  'text-red-500': postContent.length === 0 || postContent.length > 5000,
+                  'text-red-500': postContent.length === 0 || postContent.length > contentLimit.maxPostLength,
                 }"
-            >{{ postContent.length }}  / 5000</span>
+            >{{ postContent.length }}  / {{ contentLimit.maxPostLength }}</span>
           </label>
           <div class="shadow-white">
             <v-md-editor
@@ -183,6 +183,7 @@ import {CodeHandler, useMessage} from '@/store/message'
 import {PostTypeToName} from "@/utils/post";
 import {useRoute} from "vue-router";
 import {useUserStore} from "@/store/user";
+import {getContentLimit} from "@/utils/contentLimit";
 const { addMessage } = useMessage()
 
 // 判断是否是移动端
@@ -211,6 +212,12 @@ const isDiary = computed(() => {
 // 管理员权限检查
 const isAdmin = computed(() => {
   return UserStore.getUserInfo().role >= 3;
+});
+
+// 根据用户角色获取内容长度限制
+const contentLimit = computed(() => {
+  const userRole = UserStore.getUserInfo().role;
+  return getContentLimit(userRole);
 });
 
 onMounted(async ()=>{
@@ -314,7 +321,7 @@ const typeDisabled = ref(true);
 
 const saveDisabled = computed(() => {
   console.log("?")
-  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > 20000) {
+  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > contentLimit.value.maxPostLength) {
     return true;
   }
   return false;

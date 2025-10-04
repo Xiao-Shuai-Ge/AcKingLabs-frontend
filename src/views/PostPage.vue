@@ -139,7 +139,7 @@
             >
               发布评论
             </button>
-            <span class="text-gray-500 mt-1 mr-5 text-base float-right"> {{ newComment.length }} / 1000</span>
+            <span class="text-gray-500 mt-1 mr-5 text-base float-right"> {{ newComment.length }} / {{ contentLimit.maxCommentLength }}</span>
           </div>
         </div>
 
@@ -287,6 +287,7 @@ import {CheckLevel, GetTextColor} from "@/utils/level";
 import {CodeHandler, useMessage} from '@/store/message'
 import router from "@/router";
 import {upload_image} from "@/api/file";
+import {getContentLimit} from "@/utils/contentLimit";
 const { addMessage } = useMessage()
 
 // 使用图片上传
@@ -462,8 +463,14 @@ interface comment {
   ChildComments : comment_child[];
 }
 
+// 根据用户角色获取内容长度限制
+const contentLimit = computed(() => {
+  const userRole = UserStore.getUserInfo().role;
+  return getContentLimit(userRole);
+});
+
 const CommentDisabled = computed(() => {
-  if (newComment.value.length > 1000 || newComment.value.trim() === "") {
+  if (newComment.value.length > contentLimit.value.maxCommentLength || newComment.value.trim() === "") {
     return true;
   }
   return false;
