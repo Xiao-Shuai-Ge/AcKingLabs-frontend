@@ -65,7 +65,7 @@
           :key="index"
           class="animation-delay  border-2 border-gray-800 bg-white rounded-lg p-2 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer"
           @click="navigateToPost(post.ID)"
-          :style="{ animationDelay: `${index * 0.1}s` }"
+          :style="{ animationDelay: `${ (index%20) * 0.1}s` }"
       >
         <div class="flex items-center mb-2">
           <img
@@ -79,7 +79,7 @@
         </div>
 
         <div class="mt-2 mb-2 flex items-center gap-2">
-          <span class="text-2xl font-bold"> {{ post.Title }} </span>
+          <a class="text-2xl font-bold" :href="`/diary/${post.ID}`"> {{ post.Title }} </a>
           <span class="border-2 rounded-md px-1 text-sm" :class="post.TypeColor"> {{post.TypeName}} </span>
           <span v-if="post.IsPrivate" class="text-blue-500 border-2 border-blue-500 rounded-md px-1 text-sm">私密</span>
           <span v-if="post.IsFeatured" class="text-yellow-500 border-2 border-yellow-500 rounded-md px-1 text-sm">精华</span>
@@ -114,7 +114,7 @@
       <div class="flex justify-center mt-8" v-if="HasMorePosts">
         <button
             class="px-6 py-3 border-2 border-gray-800 text-gray-800 rounded-md font-medium hover:bg-gray-100 transition-all duration-300 flex items-center cursor-pointer !rounded-button whitespace-nowrap"
-            @click="LoadMorePosts(5)"
+            @click="LoadMorePosts(20)"
             :disabled="IsLoading"
         >
           <span v-if="!IsLoading">加载更多</span>
