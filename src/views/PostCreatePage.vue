@@ -129,14 +129,11 @@
           >
             发布帖子
           </button>
-          <button
-              @click="saveDraft"
-              :disabled="saveDraftDisabled"
-              class="border border-gray-300 px-6 py-3 rounded-button hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap"
-
-          >
-            保存草稿
-          </button>
+          <!-- 自动保存状态提示 -->
+          <div class="flex items-center text-sm text-gray-500">
+            <i v-if="autoSaveStatus != ''" class="fas fa-save mr-2"></i>
+            <span>{{ autoSaveStatus }}</span>
+          </div>
         </div>
       </div>
 
@@ -169,7 +166,7 @@
 </template>
 
 <script lang="ts" setup>
-import {ref, computed, onMounted} from "vue";
+import {ref, computed, onMounted, watch} from "vue";
 import Header from "@/components/Header.vue";
 import {GetWeekCode} from "@/utils/week";
 import {create_post} from "@/api/post";
@@ -206,6 +203,10 @@ const postSource = ref("");
 const selectedType = ref("周记");
 const showTypeDropdown = ref(false);
 const sourceName = ref("时间");
+
+// 自动保存相关
+const autoSaveStatus = ref("草稿已保存");
+let autoSaveTimer: NodeJS.Timeout | null = null;
 
 // 帖子类型列表
 let postTypes = [
@@ -248,6 +249,44 @@ const contentLimit = computed(() => {
   const userRole = UserStore.getUserInfo().role;
   return getContentLimit(userRole);
 });
+
+// 自动保存草稿功能
+const autoSaveDraft = () => {
+  if (postContent.value.length === 0) {
+    autoSaveStatus.value = "无内容";
+    return;
+  }
+  
+  if (isDiary.value) {
+    localStorage.setItem("draft-diary-content", postContent.value);
+  } else {
+    localStorage.setItem("draft-post-content", postContent.value);
+  }
+  
+  autoSaveStatus.value = "草稿已保存";
+  
+  // 3秒后恢复为默认状态
+  setTimeout(() => {
+    if (autoSaveStatus.value === "草稿已保存") {
+      autoSaveStatus.value = "";
+    }
+  }, 3000);
+};
+
+// 监听内容变化，实现自动保存
+watch(postContent, () => {
+  autoSaveStatus.value = "正在编辑...";
+  
+  // 清除之前的定时器
+  if (autoSaveTimer) {
+    clearTimeout(autoSaveTimer);
+  }
+  
+  // 设置3秒冷却时间
+  autoSaveTimer = setTimeout(() => {
+    autoSaveDraft();
+  }, 1000);
+}, { immediate: false });
 
 onMounted(()=>{
   // 根据周记和帖子进行初始化
@@ -308,6 +347,13 @@ onMounted(()=>{
     postSource.value = (route.query.contest_url ?? '') as string;
     postTitle.value = (route.query.contest_title ?? '') as string;
   }
+  
+  // 初始化自动保存状态
+  if (postContent.value.length > 0) {
+    autoSaveStatus.value = "草稿已保存";
+  } else {
+    autoSaveStatus.value = "无内容";
+  }
 })
 
 
@@ -334,14 +380,6 @@ const saveDisabled = computed(() => {
   }
   return false;
 })
-
-const saveDraftDisabled = computed(() => {
-  if (postTitle.value.length == 0 || selectedType.value.length == 0 || postContent.value.length == 0 || postContent.value.length > contentLimit.value.maxPostLength) {
-    return true;
-  }
-  return false;
-})
-
 
 // 发布帖子
 const publishPost = async () => {
@@ -372,18 +410,6 @@ const publishPost = async () => {
   } else {
     await router.push("/learn/" + data.data.data.id)
   }
-};
-
-// 保存草稿
-const saveDraft = () => {
-  //alert("草稿已保存到本地！");
-  // 这里可以添加实际的保存草稿逻辑
-  if (isDiary.value) {
-    localStorage.setItem("draft-diary-content",postContent.value);
-  } else {
-    localStorage.setItem("draft-post-content",postContent.value);
-  }
-  addMessage('草稿已保存到本地！', 'success')
 };
 </script>
 
