@@ -18,8 +18,12 @@
               type="text"
               placeholder="请输入帖子标题"
               maxlength="30"
-              disabled
-              class="text-gray-500 h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+              :disabled="isDiary"
+              :class="{
+                'text-gray-500': isDiary,
+                'text-gray-900': !isDiary
+              }"
+              class="h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
         </div>
 
@@ -32,9 +36,13 @@
               v-model="postSource"
               type="text"
               placeholder=""
-              disabled
+              :disabled="isDiary"
               maxlength="255"
-              class="text-gray-500 h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
+              :class="{
+                'text-gray-500': isDiary,
+                'text-gray-900': !isDiary
+              }"
+              class="h-10 border-gray-300 border rounded-button px-2 py-1 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
           />
         </div>
 
@@ -47,10 +55,10 @@
             <button
                 @click="toggleTypeDropdown"
                 class="h-10 w-full flex items-center justify-between border border-gray-300 rounded-button px-2 py-1 cursor-pointer whitespace-nowrap"
-                :disabled = "typeDisabled"
+                :disabled = "!isAdmin"
                 :class = "{
-                  'bg-gray-50 text-gray-500' : typeDisabled,
-                  'bg-white' : !typeDisabled
+                  'bg-gray-50 text-gray-500' : !isAdmin,
+                  'bg-white' : isAdmin
                 }"
             >
               <span>{{ selectedType || '请选择帖子类型' }}</span>
@@ -78,15 +86,19 @@
               <label
                   v-for="option in privacyOptions"
                   :key="String(option.value)"
-                  class="flex-1 flex items-center justify-center gap-2 px-2 cursor-pointer hover:bg-gray-50 transition-colors"
-                  :class="{ 'bg-gray-100': option.value === isPrivate }"
+                  class="flex-1 flex items-center justify-center gap-2 px-2 transition-colors"
+                  :class="{
+                    'bg-gray-100': option.value === isPrivate,
+                    'cursor-pointer hover:bg-gray-50': isAdmin,
+                    'cursor-not-allowed opacity-50': !isAdmin
+                  }"
               >
                 <input
                     type="radio"
                     v-model="isPrivate"
                     :value="option.value"
                     class="hidden"
-                    disabled
+                    :disabled="!isAdmin"
                 >
                 <i :class="option.icon"></i>
                 <span>{{ option.label }}</span>
@@ -272,7 +284,6 @@ onMounted(async ()=>{
   postSource.value = data.data.data.source;
   selectedType.value = PostTypeToName(data.data.data.type);
   isPrivate.value = data.data.data.is_private;
-  typeDisabled.value = true;
 })
 
 // 新增的隐私选项 - 根据页面类型动态设置
@@ -315,9 +326,6 @@ const selectType = (type: string) => {
   selectedType.value = type;
   showTypeDropdown.value = false;
 };
-
-// 默认禁用
-const typeDisabled = ref(true);
 
 const saveDisabled = computed(() => {
   console.log("?")
