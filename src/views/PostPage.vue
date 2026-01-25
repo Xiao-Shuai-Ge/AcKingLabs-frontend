@@ -124,7 +124,8 @@
                 height="200px"
                 disabled-menus = ""
                 @upload-image="handleUploadImage"
-                left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code"
+                left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code | stickers"
+                :toolbar="toolbar"
             />
           </div>
           <div class="mb-16">
@@ -262,12 +263,19 @@
         </div>
       </div>
     </div>
+
+    <!-- 表情包弹窗 -->
+    <StickerPicker 
+      v-model="showStickerModal" 
+      @select="insertSticker" 
+    />
   </div>
 </template>
 
 <script lang="ts" setup>
 import {computed, onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
+import StickerPicker from "@/components/StickerPicker.vue";
 import {get_user_info} from "@/api/user";
 import {
   create_comment, delete_comment,
@@ -503,6 +511,36 @@ const ClickLike = async () => {
     Likes.value++;
   }
   //console.log(data)
+};
+
+const showStickerModal = ref(false);
+const currentEditor = ref<any>(null);
+
+const insertSticker = (url: string) => {
+  if (currentEditor.value) {
+    currentEditor.value.insert((selected: any) => {
+      const prefix = '![';
+      const suffix = `](${url})`;
+      const placeholder = 'sticker';
+      const content = selected || placeholder;
+      return {
+        text: `${prefix}${content}${suffix}`,
+        selected: content,
+      };
+    });
+  }
+  showStickerModal.value = false;
+};
+
+const toolbar = {
+  stickers: {
+    title: '表情包',
+    icon: 'far fa-smile',
+    action(editor: any) {
+      currentEditor.value = editor;
+      showStickerModal.value = true;
+    },
+  },
 };
 
 const HasMoreComments = ref(true);
