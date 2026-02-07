@@ -9,6 +9,32 @@
       </div>
       
       <div class="content-body">
+        <!-- 搜索和过滤工具栏 -->
+        <div class="filter-section">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索用户名/邮箱/真实姓名/学号"
+            clearable
+            style="width: 300px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+          >
+            <template #append>
+              <el-button :icon="Search" @click="handleSearch" />
+            </template>
+          </el-input>
+          
+          <el-select v-model="roleFilter" placeholder="角色筛选" clearable style="width: 150px" @change="handleRoleFilter">
+            <el-option label="游客" value="0" />
+            <el-option label="普通用户" value="1" />
+            <el-option label="正式成员" value="2" />
+            <el-option label="管理员" value="3" />
+            <el-option label="超级管理员" value="4" />
+          </el-select>
+
+          <el-button :icon="Refresh" circle @click="refreshData" title="刷新数据" />
+        </div>
+
         <!-- 用户列表表格 -->
         <div class="table-section">
           <el-table
@@ -60,8 +86,16 @@
               </template>
             </el-table-column>
             
-            <el-table-column label="操作" width="200" fixed="right">
+            <el-table-column label="操作" width="220" fixed="right">
               <template #default="{ row }">
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  @click="$router.push(`/profile/${row.id}`)"
+                >
+                  主页
+                </el-button>
                 <el-button
                   type="primary"
                   size="small"
@@ -128,8 +162,11 @@
         
         <el-form-item label="角色" prop="role">
           <el-select v-model="editForm.role">
-            <el-option label="普通用户" :value="0" />
-            <el-option label="管理员" :value="1" />
+            <el-option label="游客(未实名)" :value="0" />
+            <el-option label="普通用户" :value="1" />
+            <el-option label="正式成员" :value="2" />
+            <el-option label="管理员" :value="3" />
+            <el-option label="超级管理员" :value="4" />
           </el-select>
         </el-form-item>
         
@@ -162,7 +199,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import AdminSidebar from '@/components/admin/AdminSidebar.vue'
-import { get_user_list, delete_user, set_profile, set_role } from '@/api/user'
+import { get_user_list, delete_user, set_profile, set_role, get_user_profile } from '@/api/user'
 import Header from '@/components/Header.vue'
 import { GetRoleName, CheckLevel } from '@/utils/level'
 
@@ -202,7 +239,11 @@ const editForm = reactive({
   real_name: '',
   role: 0,
   grade: 0,
-  xp: 0
+  xp: 0,
+  student_no: '',
+  codeforces_id: '',
+  signature: '',
+  awards: [] as any[]
 })
 
 // 表单验证规则
@@ -220,15 +261,15 @@ const editRules = {
 const computedFilteredUsers = computed(() => {
   let result = users.value
 
-  // 关键词搜索
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
-    result = result.filter(user => 
-      user.username.toLowerCase().includes(keyword) ||
-      user.email.toLowerCase().includes(keyword) ||
-      (user.real_name && user.real_name.toLowerCase().includes(keyword))
-    )
-  }
+  // 关键词搜索已移至后端
+  // if (searchKeyword.value) {
+  //   const keyword = searchKeyword.value.toLowerCase()
+  //   result = result.filter(user => 
+  //     user.username.toLowerCase().includes(keyword) ||
+  //     user.email.toLowerCase().includes(keyword) ||
+  //     (user.real_name && user.real_name.toLowerCase().includes(keyword))
+  //   )
+  // }
 
   // 角色筛选
   if (roleFilter.value !== '') {
@@ -254,7 +295,8 @@ const fetchUsers = async () => {
     loading.value = true
     const response = await get_user_list({
       page: currentPage.value,
-      count: pageSize.value
+      count: pageSize.value,
+      keyword: searchKeyword.value
     })
     
     if (response.data.code === 20000) {
@@ -274,7 +316,8 @@ const fetchUsers = async () => {
 
 // 搜索处理
 const handleSearch = () => {
-  updateFilteredUsers()
+  currentPage.value = 1
+  fetchUsers()
 }
 
 // 角色筛选处理
@@ -311,18 +354,33 @@ const handleCurrentChange = (page: number) => {
 }
 
 // 编辑用户
-const editUser = (user: UserItem) => {
-  Object.assign(editForm, {
-    avatar: user.avatar,
-    id: user.id,
-    username: user.username,
-    email: user.email,
-    real_name: user.real_name,
-    role: user.role,
-    grade: user.grade,
-    xp: user.xp
-  })
-  editDialogVisible.value = true
+const editUser = async (user: UserItem) => {
+  try {
+    const resp = await get_user_profile({id: user.id})
+    if (resp.data.code === 20000) {
+      const profile = resp.data.data
+      Object.assign(editForm, {
+        avatar: profile.avatar,
+        id: profile.id,
+        username: profile.username,
+        email: user.email,
+        real_name: profile.real_name,
+        role: profile.role,
+        grade: profile.grade,
+        xp: profile.xp,
+        student_no: profile.student_no,
+        codeforces_id: profile.codeforces_id,
+        signature: profile.signature,
+        awards: profile.awards || []
+      })
+      editDialogVisible.value = true
+    } else {
+      ElMessage.error('获取用户信息失败')
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    ElMessage.error('获取用户信息失败')
+  }
 }
 
 // 保存用户编辑
@@ -337,8 +395,10 @@ const saveUserEdit = async () => {
       username: editForm.username,
       real_name: editForm.real_name,
       grade: editForm.grade,
-      student_no: '', // 保持原学号
-      codeforces_id: '' // 保持原CF ID
+      student_no: editForm.student_no,
+      codeforces_id: editForm.codeforces_id,
+      signature: editForm.signature,
+      awards: editForm.awards
     })
     
     // 更新用户角色
@@ -439,6 +499,15 @@ onMounted(() => {
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ebeef5;
 }
 
 .search-section {
