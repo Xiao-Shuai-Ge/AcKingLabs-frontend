@@ -10,8 +10,14 @@
       
       <el-card class="box-card">
         <el-table :data="reviewList" style="width: 100%" v-loading="loading">
-          <el-table-column prop="id" label="审核ID" width="100" />
-          <el-table-column prop="post_title" label="帖子标题" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="id" label="审核ID" min-width="180" />
+          <el-table-column prop="post_title" label="帖子标题" min-width="150" show-overflow-tooltip>
+             <template #default="scope">
+               <span class="cursor-pointer text-blue-500 hover:text-blue-700" @click="handlePreview(scope.row)">
+                 {{ scope.row.post_title }}
+               </span>
+             </template>
+          </el-table-column>
           <el-table-column prop="post_type" label="类型" width="100">
             <template #default="scope">
               <el-tag>{{ scope.row.post_type }}</el-tag>
@@ -31,7 +37,12 @@
           </el-table-column>
           <el-table-column label="操作" width="200" fixed="right">
             <template #default="scope">
-              <div v-if="scope.row.status === 0">
+              <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click="handlePreview(scope.row)"
+              >查看</el-button>
+              <div v-if="scope.row.status === 0" class="inline-block ml-2">
                 <el-button 
                   type="success" 
                   size="small" 
@@ -43,7 +54,7 @@
                   @click="handleAudit(scope.row, 2)"
                 >拒绝</el-button>
               </div>
-              <span v-else>已审核</span>
+              <span v-else class="ml-2">已审核</span>
             </template>
           </el-table-column>
         </el-table>
@@ -61,6 +72,18 @@
         </div>
       </el-card>
     </div>
+    <el-dialog
+      v-model="previewVisible"
+      :title="previewTitle"
+      width="70%"
+      destroy-on-close
+    >
+      <div v-loading="previewLoading" class="min-h-[200px]">
+        <div class="prose max-w-none">
+          <v-md-preview :text="previewContent"></v-md-preview>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -68,19 +91,19 @@
 import { ref, onMounted } from 'vue'
 import Header from '@/components/Header.vue'
 import AdminSidebar from '@/components/admin/AdminSidebar.vue'
-import { get_review_list, audit_review } from '@/api/post'
+import { get_review_list, audit_review, get_post_detail } from '@/api/post'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface ReviewItem {
-  id: number
-  post_id: number
-  reviewer_id: number
+  id: string
+  post_id: string
+  reviewer_id: string
   status: number // 0: Pending, 1: Pass, 2: Reject
   reason: string
   create_time: number
   post_title: string
   post_type: string
-  user_id: number
+  user_id: string
 }
 
 const loading = ref(false)
@@ -88,6 +111,11 @@ const reviewList = ref<ReviewItem[]>([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+
+const previewVisible = ref(false)
+const previewLoading = ref(false)
+const previewContent = ref('')
+const previewTitle = ref('')
 
 const fetchReviews = async () => {
   loading.value = true
@@ -97,20 +125,42 @@ const fetchReviews = async () => {
       count: pageSize.value
     })
     // @ts-ignore
-    if (res.code === 200) {
+    if (res.data.code === 20000) {
       // @ts-ignore
-      reviewList.value = res.data.list || []
+      reviewList.value = res.data.data.list || []
       // @ts-ignore
-      total.value = res.data.total || 0
+      total.value = res.data.data.total || 0
     } else {
       // @ts-ignore
-      ElMessage.error(res.msg || '获取审核列表失败')
+      ElMessage.error(res.data.message || '获取审核列表失败')
     }
   } catch (error) {
     console.error(error)
     ElMessage.error('网络错误，请稍后重试')
   } finally {
     loading.value = false
+  }
+}
+
+const handlePreview = async (row: ReviewItem) => {
+  previewVisible.value = true
+  previewLoading.value = true
+  previewTitle.value = row.post_title
+  try {
+    const res = await get_post_detail({ id: row.post_id })
+    // @ts-ignore
+    if (res.data.code === 20000) {
+      // @ts-ignore
+      previewContent.value = res.data.data.content
+    } else {
+      // @ts-ignore
+      ElMessage.error(res.data.message || '获取详情失败')
+    }
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('网络错误')
+  } finally {
+    previewLoading.value = false
   }
 }
 
@@ -131,12 +181,12 @@ const handleAudit = (row: ReviewItem, status: number) => {
         status: status
       })
       // @ts-ignore
-      if (res.code === 200) {
+      if (res.data.code === 20000) {
         ElMessage.success('操作成功')
         fetchReviews()
       } else {
         // @ts-ignore
-        ElMessage.error(res.msg || '操作失败')
+        ElMessage.error(res.data.message || '操作失败')
       }
     } catch (error) {
       console.error(error)

@@ -111,7 +111,7 @@ export const get_review_list = (data: {
 }
 
 export const audit_review = (data: {
-    review_id: number
+    review_id: string
     status: number
 }) => {
     return http.post('/api/post/audit-review', data)
