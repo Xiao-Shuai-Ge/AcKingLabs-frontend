@@ -101,6 +101,22 @@ export const get_page_post = (data : {
     })
 }
 
+export const get_review_list = (data: {
+    page: number
+    count: number
+}) => {
+    return http.get('/api/post/review-list', {
+        params: data
+    })
+}
+
+export const audit_review = (data: {
+    review_id: number
+    status: number
+}) => {
+    return http.post('/api/post/audit-review', data)
+}
+
 export const set_featured = (data : {post_id: string}) => {
     return http.post('/api/post/feature',data)
 }

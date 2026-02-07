@@ -133,7 +133,7 @@ const routes = [
     {
         path: '/admin/posts',
         name: 'AdminPosts',
-        component: () => import('../views/admin/ComingSoonPage.vue')
+        component: () => import('../views/admin/PostManagementPage.vue')
     },
     {
         path: '/admin/resumes',
