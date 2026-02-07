@@ -103,6 +103,7 @@ interface ReviewItem {
   create_time: number
   post_title: string
   post_type: string
+  post_content: string
   user_id: string
 }
 
@@ -146,6 +147,15 @@ const handlePreview = async (row: ReviewItem) => {
   previewVisible.value = true
   previewLoading.value = true
   previewTitle.value = row.post_title
+  
+  if (row.post_content) {
+    // If we have snapshot content, use it directly
+    previewContent.value = row.post_content
+    previewLoading.value = false
+    return
+  }
+
+  // Fallback to fetching current post detail (for old records)
   try {
     const res = await get_post_detail({ id: row.post_id })
     // @ts-ignore
