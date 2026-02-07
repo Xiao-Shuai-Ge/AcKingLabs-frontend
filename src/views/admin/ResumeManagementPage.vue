@@ -53,7 +53,7 @@
         <div class="table-section">
           <el-table
             v-loading="loading"
-            :data="filteredResumes"
+            :data="resumes"
             stripe
             style="width: 100%"
             @selection-change="handleSelectionChange"
@@ -359,7 +359,6 @@ interface ResumeItem extends Omit<ResumeListItem, 'avatar'> {
 // 响应式数据
 const loading = ref(false)
 const resumes = ref<ResumeItem[]>([])
-const filteredResumes = ref<ResumeItem[]>([])
 const selectedResumes = ref<ResumeItem[]>([])
 const searchKeyword = ref('')
 const statusFilter = ref('')
@@ -379,32 +378,13 @@ const resumeToReject = ref<ResumeItem | null>(null)
 const resumeToPending = ref<ResumeItem | null>(null)
 const generatedInviteCode = ref('')
 
-// 计算属性 - 过滤后的简历列表
+// 计算属性 - 过滤后的简历列表 (Deprecated)
 const computedFilteredResumes = computed(() => {
-  let result = resumes.value
-
-  // 关键词搜索
-  if (searchKeyword.value) {
-    const keyword = searchKeyword.value.toLowerCase()
-    result = result.filter(resume => 
-      resume.real_name.toLowerCase().includes(keyword) ||
-      resume.student_no.toLowerCase().includes(keyword) ||
-      resume.email.toLowerCase().includes(keyword)
-    )
-  }
-
-  // 状态筛选
-  if (statusFilter.value !== '') {
-    const status = parseInt(statusFilter.value)
-    result = result.filter(resume => resume.status === status)
-  }
-
-  return result
+  return []
 })
 
-// 更新过滤后的简历列表
+// 更新过滤后的简历列表 (Deprecated)
 const updateFilteredResumes = () => {
-  filteredResumes.value = computedFilteredResumes.value
 }
 
 // 获取状态文本
@@ -443,12 +423,12 @@ const getStatusTagType = (status: number) => {
 const fetchResumes = async () => {
   try {
     loading.value = true
-    const response = await getResumeList(currentPage.value, pageSize.value)
+    const status = statusFilter.value === '' ? undefined : parseInt(statusFilter.value)
+    const response = await getResumeList(currentPage.value, pageSize.value, searchKeyword.value, status)
     
     if (response.data.code === 20000) {
       resumes.value = response.data.data.resumes
       totalResumes.value = response.data.data.total
-      updateFilteredResumes()
     } else {
       ElMessage.error('获取简历列表失败')
     }
@@ -462,12 +442,14 @@ const fetchResumes = async () => {
 
 // 搜索处理
 const handleSearch = () => {
-  updateFilteredResumes()
+  currentPage.value = 1
+  fetchResumes()
 }
 
 // 状态筛选处理
 const handleStatusFilter = () => {
-  updateFilteredResumes()
+  currentPage.value = 1
+  fetchResumes()
 }
 
 // 刷新数据
@@ -578,12 +560,8 @@ const confirmAcceptResume = async () => {
       inviteCodeDialogVisible.value = true
       acceptDialogVisible.value = false
       
-      // 更新简历状态
-      const resume = resumes.value.find(r => r.id === resumeToAccept.value!.id)
-      if (resume) {
-        resume.status = 2
-        updateFilteredResumes()
-      }
+      // 更新简历列表
+      fetchResumes()
       
       ElMessage.success('简历已通过')
 
@@ -612,12 +590,8 @@ const confirmRejectResume = async () => {
     if (response.data.code === 20000) {
       rejectDialogVisible.value = false
       
-      // 更新简历状态
-      const resume = resumes.value.find(r => r.id === resumeToReject.value!.id)
-      if (resume) {
-        resume.status = -1
-        updateFilteredResumes()
-      }
+      // 更新简历列表
+      fetchResumes()
       
       // 如果当前查看的是被拒绝的简历，也要更新详情页的状态
       if (currentResume.value && currentResume.value.id === resumeToReject.value.id) {
@@ -646,12 +620,8 @@ const confirmPendingResume = async () => {
     if (response.data.code === 20000) {
       pendingDialogVisible.value = false
       
-      // 更新简历状态
-      const resume = resumes.value.find(r => r.id === resumeToPending.value!.id)
-      if (resume) {
-        resume.status = 1
-        updateFilteredResumes()
-      }
+      // 更新简历列表
+      fetchResumes()
       
       // 如果当前查看的是被设为待考核的简历，也要更新详情页的状态
       if (currentResume.value && currentResume.value.id === resumeToPending.value.id) {

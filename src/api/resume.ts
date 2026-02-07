@@ -132,9 +132,9 @@ export const getResumeDetailAdmin = (data: {id: string,email: string, code: stri
 }
 
 // 获取简历列表（管理员功能）
-export const getResumeList = (page: number, count: number) => {
+export const getResumeList = (page: number, count: number, keyword?: string, status?: number) => {
   return http.get('/api/resume/list', {
-    params: { page, count }
+    params: { page, count, keyword, status }
   })
 }
 
