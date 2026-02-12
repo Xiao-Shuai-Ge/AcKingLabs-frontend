@@ -89,6 +89,26 @@
               />
             </div>
 
+            <!-- 提及通知 -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+              <div class="flex-1">
+                <div class="flex items-center">
+                  <i class="fas fa-at text-gray-600 mr-3"></i>
+                  <div>
+                    <h3 class="font-medium text-gray-900">提及通知</h3>
+                    <p class="text-sm text-gray-500 mt-1">当有人在内容中提及您(@)时接收通知</p>
+                  </div>
+                </div>
+              </div>
+              <el-switch
+                v-model="settings.mention_notify"
+                size="large"
+                :active-color="'#1f2937'"
+                :inactive-color="'#d1d5db'"
+                @change="handleSettingChange"
+              />
+            </div>
+
             <!-- 发布求助帖通知 -->
             <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
               <div class="flex-1">
@@ -181,6 +201,7 @@ const settings = ref<SettingsJSON>({
   system_message_email_notify: false,
   like_notify: false,
   reply_notify: false,
+  mention_notify: true,
   help_post_notify: false
 })
 
@@ -189,6 +210,7 @@ const originalSettings = ref<SettingsJSON>({
   system_message_email_notify: false,
   like_notify: false,
   reply_notify: false,
+  mention_notify: true,
   help_post_notify: false
 })
 

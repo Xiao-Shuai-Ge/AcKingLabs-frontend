@@ -73,6 +73,7 @@ export interface SettingsJSON {
     system_message_email_notify: boolean; // 系统消息邮箱通知
     like_notify: boolean;                 // 点赞通知
     reply_notify: boolean;                // 回复通知
+    mention_notify: boolean;              // 提及通知
     help_post_notify: boolean;            // 发布求助帖通知
 }
 
