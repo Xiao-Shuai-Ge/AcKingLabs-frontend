@@ -49,6 +49,12 @@ export const get_rankings = (data:{ page: number, count: number }) => {
     })
 }
 
+export const search_users = (data: { page: number, count: number, keyword: string }) => {
+    return http.get('/api/user/search', {
+        params: data
+    })
+}
+
 // 管理员用户管理接口
 export const get_user_list = (data: { page: number, count: number, keyword?: string }) => {
     return http.get('/api/user/list', {

@@ -122,9 +122,9 @@
             <v-md-editor
                 v-model="newComment"
                 height="200px"
-                disabled-menus = ""
+                :disabled-menus="[]"
                 @upload-image="handleUploadImage"
-                left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code | stickers"
+                left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code | stickers at-user"
                 :toolbar="toolbar"
             />
           </div>
@@ -269,6 +269,11 @@
       v-model="showStickerModal" 
       @select="insertSticker" 
     />
+
+    <UserSelector
+      v-model="showUserSelector"
+      @select="insertUser"
+    />
   </div>
 </template>
 
@@ -276,6 +281,7 @@
 import {computed, onMounted, ref} from "vue";
 import Header from "@/components/Header.vue";
 import StickerPicker from "@/components/StickerPicker.vue";
+import UserSelector from "@/components/UserSelector.vue";
 import {get_user_info} from "@/api/user";
 import {
   create_comment, delete_comment,
@@ -514,6 +520,7 @@ const ClickLike = async () => {
 };
 
 const showStickerModal = ref(false);
+const showUserSelector = ref(false);
 const currentEditor = ref<any>(null);
 
 const insertSticker = (url: string) => {
@@ -532,6 +539,19 @@ const insertSticker = (url: string) => {
   showStickerModal.value = false;
 };
 
+const insertUser = (user: any) => {
+  if (currentEditor.value) {
+    currentEditor.value.insert((selected: any) => {
+      // 插入格式: [@Username](/profile/ID)
+      return {
+        text: `[@${user.username}](/profile/${user.id}) `,
+        selected: '',
+      };
+    });
+  }
+  showUserSelector.value = false;
+};
+
 const toolbar = {
   stickers: {
     title: '表情包',
@@ -539,6 +559,14 @@ const toolbar = {
     action(editor: any) {
       currentEditor.value = editor;
       showStickerModal.value = true;
+    },
+  },
+  'at-user': {
+    title: '@用户',
+    icon: 'fas fa-at',
+    action(editor: any) {
+      currentEditor.value = editor;
+      showUserSelector.value = true;
     },
   },
 };

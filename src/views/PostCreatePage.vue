@@ -110,12 +110,18 @@
                 mode="edit"
                 disabled-menus = ""
                 @upload-image="handleUploadImage"
-                left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code"
+                left-toolbar="undo redo clear | h bold italic strikethrough quote | ul ol table hr | link image code | at-user"
                 right-toolbar="toc"
+                :toolbar="toolbar"
                 height="400px"
             ></v-md-editor>
           </div>
         </div>
+
+        <UserSelector
+          v-model="showUserSelector"
+          @select="insertUser"
+        />
 
         <div class="flex gap-4 mt-4 mb-8">
           <button
@@ -168,6 +174,7 @@
 <script lang="ts" setup>
 import {ref, computed, onMounted, watch} from "vue";
 import Header from "@/components/Header.vue";
+import UserSelector from "@/components/UserSelector.vue";
 import {GetWeekCode} from "@/utils/week";
 import {create_post} from "@/api/post";
 import router from "@/router";
@@ -203,6 +210,32 @@ const postSource = ref("");
 const selectedType = ref("周记");
 const showTypeDropdown = ref(false);
 const sourceName = ref("时间");
+
+const showUserSelector = ref(false);
+const currentEditor = ref<any>(null);
+
+const insertUser = (user: any) => {
+  if (currentEditor.value) {
+    currentEditor.value.insert((selected: any) => {
+      return {
+        text: `[@${user.username}](/profile/${user.id}) `,
+        selected: '',
+      };
+    });
+  }
+  showUserSelector.value = false;
+};
+
+const toolbar = {
+  'at-user': {
+    title: '@用户',
+    icon: 'fas fa-at',
+    action(editor: any) {
+      currentEditor.value = editor;
+      showUserSelector.value = true;
+    },
+  },
+};
 
 // 自动保存相关
 const autoSaveStatus = ref("草稿已保存");
